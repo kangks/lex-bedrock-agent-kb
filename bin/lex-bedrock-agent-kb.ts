@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { LexBedrockAgentKbStack } from '../lib/lex-bedrock-agent-kb-stack';
 import {AwsSolutionsChecks} from "cdk-nag";
-import {NagSuppressions} from "cdk-nag";
+import { BedrockKbStack } from '../lib/bedrock-kb-stack';
+import { LexBotStack, LexBotStackProps } from '../lib/lex-bot-stack';
+import { S3DataSourceStack } from '../lib/s3-datasource-stack';
 
 const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -12,47 +13,22 @@ const env = {
 
 const app = new cdk.App();
 
+// Apply CDK nag checks
 cdk.Aspects.of(app).add(new AwsSolutionsChecks({verbose: true}));
 
-const s3DataSourceStack = new cdk.Stack(app, 's3DataSourceStack', {
+const s3DataSourceStack = new S3DataSourceStack(app, 's3DataSourceStack', {
+  env // to overcome cross-environment usage error from creating a stack that is Region/Account-agnostic
+});
+
+const bedrockKbStack = new BedrockKbStack(app, 'BedrockKbStack', {
+  bedrockKnowledgeS3Datasource: s3DataSourceStack.s3Bucket,
   env // to overcome cross-environment error from creating a stack that is Region/Account-agnostic
 });
 
-const dataSourceBucket = new cdk.aws_s3.Bucket(s3DataSourceStack, 's3DataSourceBucket', {
-  bucketName: `s3-data-source-${cdk.Stack.of(s3DataSourceStack).account}`,
-  removalPolicy: cdk.RemovalPolicy.DESTROY,
-  autoDeleteObjects: true,
-  enforceSSL: true
-});
-new cdk.aws_s3_deployment.BucketDeployment(s3DataSourceStack, 's3DeployFiles', {
-  sources: [cdk.aws_s3_deployment.Source.asset('./sample_data')],
-  destinationBucket: dataSourceBucket,
-});
+const lexBotStack = new LexBotStack(app, 'LexBotStack', <LexBotStackProps>{
+  bedrockAgentId: bedrockKbStack.bedrockAgent.agentId,
+  bedrockAgentAliasId: bedrockKbStack.bedrockAgent.aliasId,
+  env,
+}).addDependency(bedrockKbStack);
 
-NagSuppressions.addStackSuppressions(
-  s3DataSourceStack,
-  [
-    {
-      id: 'AwsSolutions-S1',
-      reason: 'There is no need to enable access logging for the data source bucket.',
-    },
-    {
-      id: 'AwsSolutions-IAM5',
-      reason: 'Acceptable risk with The IAM entity contains wildcard permissions',
-    },
-    {
-      id: 'AwsSolutions-IAM4',
-      reason: 'Acceptable risk with The IAM entity contains wildcard permissions',
-    },
-    {
-      id: 'AwsSolutions-L1',
-      reason: 'Acceptable risk with The Lambda function is unencrypted',
-    }
-  ],
-  true,
-);
-
-new LexBedrockAgentKbStack(app, 'LexBedrockAgentKbStack', {
-  bedrockKnowledgeS3Datasource: dataSourceBucket,
-  env
-}).addDependency(s3DataSourceStack);
+app.synth();
