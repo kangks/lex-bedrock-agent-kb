@@ -6,14 +6,14 @@ import * as lambda_python from '@aws-cdk/aws-lambda-python-alpha';
 import { NagSuppressions } from "cdk-nag";
 import * as path from "path";
 
-export interface LexBotStackProps extends cdk.StackProps {
+export interface LexBotProps {
   readonly bedrockAgentId: string;
   readonly bedrockAgentAliasId: string;
 }
 
-export class LexBotStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: LexBotStackProps) {
-    super(scope, id, props);
+export class LexBotConstruct extends Construct {
+  constructor(scope: Construct, id: string, props: LexBotProps) {
+    super(scope, id);
 
     const lexIntentName = "lexBedrockKB";
 
@@ -35,7 +35,7 @@ export class LexBotStack extends cdk.Stack {
                 'lex:PutIntent',
               ],
               resources: [
-                `arn:aws:lex:${props?.env?.region}:${props?.env?.account}:intent:${lexIntentName}:*`,
+                `arn:aws:lex:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:intent:${lexIntentName}:*`,
               ]
             }),
           ]
@@ -56,7 +56,7 @@ export class LexBotStack extends cdk.Stack {
                 'logs:PutLogEvents'
               ],
               resources: [
-                `arn:aws:logs:${props?.env?.region}:${props?.env?.account}:log-group:/aws/lambda/${this.stackName}*`
+                `arn:aws:logs:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:log-group:/aws/lambda/*`
               ]
             }),
             new cdk.aws_iam.PolicyStatement({
@@ -72,12 +72,13 @@ export class LexBotStack extends cdk.Stack {
         })
       }
     });
-    
+
     const lexFallbackFunction = new lambda_python.PythonFunction(this, 'LexFallbackFunction', {
       runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_handler',
-      entry: path.join(__dirname, '../lambda/lex-fallback'),
-      layers: [lambda.LayerVersion.fromLayerVersionArn(this, 'LexFallbackPowerToolsLayer', `arn:aws:lambda:${this.region}:017000801446:layer:AWSLambdaPowertoolsPythonV3-python313-x86_64:4`)],
+      entry: path.join(__dirname, './lambda/lex-fallback'),
+      layers: [lambda.LayerVersion.fromLayerVersionArn(this, 'LexFallbackPowerToolsLayer', 
+        `arn:aws:lambda:${cdk.Stack.of(this).region}:017000801446:layer:AWSLambdaPowertoolsPythonV3-python313-x86_64:4`)],
       timeout: cdk.Duration.minutes(2),
       role: lexFallbackFunctionLambdaRole,
       environment: {
