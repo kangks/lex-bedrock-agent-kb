@@ -26,6 +26,8 @@ export class S3DataSourceStack extends cdk.Stack {
         destinationBucket: this.s3Bucket,
       });
 
+      new cdk.CfnOutput(this, 'DocumentBucket', {value: this.s3Bucket.bucketName});
+
       NagSuppressions.addStackSuppressions(
         this,
         [

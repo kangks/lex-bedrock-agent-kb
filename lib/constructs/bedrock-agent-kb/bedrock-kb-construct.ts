@@ -39,7 +39,8 @@ export class BedrockKbConstruct extends Construct {
       description:'alias for bedrock agent'
     });
 
-    this.addS3KnowledgeBase(props.knowledgebaseDataSourceName, props.bedrockKnowledgeS3Datasource);
+    const kb = this.addS3KnowledgeBase(props.knowledgebaseDataSourceName, props.bedrockKnowledgeS3Datasource);
+    this.bedrockAgent.addKnowledgeBase(kb);
     this.addActionGroup();
 
     NagSuppressions.addResourceSuppressionsByPath(
@@ -70,7 +71,7 @@ export class BedrockKbConstruct extends Construct {
     );
   }
 
-  public addS3KnowledgeBase(knowledgeBaseName: string, bedrockKnowledgeS3Datasource: s3.IBucket ){
+  public addS3KnowledgeBase(knowledgeBaseName: string, bedrockKnowledgeS3Datasource: s3.IBucket ):bedrock.KnowledgeBase{
     // Create access logs bucket
     const accesslogBucket = new s3.Bucket(this, `${cdk.Stack.of(this).stackName}-${knowledgeBaseName}-accesslog`, {
       enforceSSL: true,
@@ -121,6 +122,8 @@ export class BedrockKbConstruct extends Construct {
         }),
       }
     );    
+
+    return kb;
 
     NagSuppressions.addResourceSuppressions(
       vectorStore,
