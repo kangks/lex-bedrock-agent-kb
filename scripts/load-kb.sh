@@ -2,18 +2,18 @@
 
 set -e -x
 
-BOOKS_LIST=("https://www.gutenberg.org/ebooks/84.txt.utf-8"
-  "https://www.gutenberg.org/ebooks/1342.txt.utf-8"
-  "https://www.gutenberg.org/ebooks/2701.txt.utf-8"
-  "https://www.gutenberg.org/ebooks/1513.txt.utf-8")
+DOCUMENTS=("https://raw.githubusercontent.com/doitintl/amazon-q-business-workshop/refs/heads/main/knowledge/doc/Restaurant_Childrens_Menu.pdf"
+"https://raw.githubusercontent.com/doitintl/amazon-q-business-workshop/refs/heads/main/knowledge/doc//Restaurant_Dinner_Menu.pdf"
+"https://raw.githubusercontent.com/doitintl/amazon-q-business-workshop/refs/heads/main/knowledge/doc/Restaurant_week_specials.pdf")
 
+rm -fr sample_data
 mkdir -p sample_data
 
 pushd sample_data
 # download the books
-for book in "${BOOKS_LIST[@]}"
+for document in "${DOCUMENTS[@]}"
 do
-  curl -L -o "$(basename $book).txt" $book
+  curl -L -o "$(basename $document)" $document
 done
 
 popd
