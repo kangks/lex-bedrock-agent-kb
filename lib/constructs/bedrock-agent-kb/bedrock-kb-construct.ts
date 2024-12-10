@@ -34,14 +34,14 @@ export class BedrockKbConstruct extends Construct {
       }
     );
 
+    const kb = this.addS3KnowledgeBase(props.knowledgebaseDataSourceName, props.bedrockKnowledgeS3Datasource);
+    this.bedrockAgent.addKnowledgeBase(kb);
+    this.addActionGroup();
+
     this.agentAlias = this.bedrockAgent.addAlias({
       aliasName: 'agent01',
       description:'alias for bedrock agent'
     });
-
-    const kb = this.addS3KnowledgeBase(props.knowledgebaseDataSourceName, props.bedrockKnowledgeS3Datasource);
-    this.bedrockAgent.addKnowledgeBase(kb);
-    this.addActionGroup();
 
     NagSuppressions.addResourceSuppressionsByPath(
       cdk.Stack.of(this),
@@ -123,8 +123,6 @@ export class BedrockKbConstruct extends Construct {
       }
     );    
 
-    return kb;
-
     NagSuppressions.addResourceSuppressions(
       vectorStore,
       [
@@ -136,6 +134,8 @@ export class BedrockKbConstruct extends Construct {
       true,
     );  
         
+    return kb;
+
   }
 
   private addActionGroup(){
