@@ -12,12 +12,17 @@ export interface LexBotProps {
 }
 
 export class LexBotConstruct extends Construct {
+
+  public readonly lexBot: lex.CfnBot;
+
   constructor(scope: Construct, id: string, props: LexBotProps) {
     super(scope, id);
 
     const lexIntentName = "lexBedrockKB";
 
-    const lexRole = new cdk.aws_iam.Role(this, 'LexRole', {
+    const lexRole = new cdk.aws_iam.Role(this, 
+      `${cdk.Stack.of(this).stackName}-LexRole`,
+      {
       assumedBy: new cdk.aws_iam.ServicePrincipal('lex.amazonaws.com'),
       inlinePolicies: {
         'LexBasicExecution': new cdk.aws_iam.PolicyDocument({
@@ -43,7 +48,9 @@ export class LexBotConstruct extends Construct {
       }
     });
 
-    const lexFallbackFunctionLambdaRole = new cdk.aws_iam.Role(this, 'lambdaRole', {
+    const lexFallbackFunctionLambdaRole = new cdk.aws_iam.Role(this, 
+      `${cdk.Stack.of(this).stackName}-lexfallback-lambdarole`,
+      {
       assumedBy: new cdk.aws_iam.ServicePrincipal('lambda.amazonaws.com'),
       inlinePolicies: {
         'LambdaBasicExecution': new cdk.aws_iam.PolicyDocument({
@@ -65,7 +72,7 @@ export class LexBotConstruct extends Construct {
                 'bedrock:InvokeAgent',
               ],
               resources: [
-                `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:agent-alias/${props.bedrockAgentId}/*` 
+                `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:agent-alias/${props.bedrockAgentId}/*`
               ]
             })
           ]
@@ -73,11 +80,13 @@ export class LexBotConstruct extends Construct {
       }
     });
 
-    const lexFallbackFunction = new lambda_python.PythonFunction(this, 'LexFallbackFunction', {
+    const lexFallbackFunction = new lambda_python.PythonFunction(this, 
+      `${cdk.Stack.of(this).stackName}-lexfallback-lambdafunction`,
+      {
       runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_handler',
       entry: path.join(__dirname, './lambda/lex-fallback'),
-      layers: [lambda.LayerVersion.fromLayerVersionArn(this, 'LexFallbackPowerToolsLayer', 
+      layers: [lambda.LayerVersion.fromLayerVersionArn(this, 'LexFallbackPowerToolsLayer',
         `arn:aws:lambda:${cdk.Stack.of(this).region}:017000801446:layer:AWSLambdaPowertoolsPythonV3-python313-x86_64:4`)],
       timeout: cdk.Duration.minutes(2),
       role: lexFallbackFunctionLambdaRole,
@@ -108,22 +117,22 @@ export class LexBotConstruct extends Construct {
         },
         localeId: 'en_US',
       }],
-      description: 'Langchain Bedrock Test Bot Alias',
+      description: 'Lex Bedrock Test Bot Alias',
       sentimentAnalysisSettings: {
         DetectSentiment: false,
       },
-    };    
+    };
 
     // Create Lex bot with fallback intent
-    const lexBot = new lex.CfnBot(this, 'BookBot', {
+    this.lexBot = new lex.CfnBot(this, 
+      `${cdk.Stack.of(this).stackName}-lexbot`,
+      {
+      name: lexIntentName,
+      roleArn: lexRole.roleArn,
       dataPrivacy: {
         ChildDirected: true
       },
       idleSessionTtlInSeconds: 300,
-      name: lexIntentName,
-      roleArn: lexRole.roleArn,
-      autoBuildBotLocales: true,
-      testBotAliasSettings: testBotAliasSettingsProperty,
       botLocales: [{
         localeId: 'en_US',
         nluConfidenceThreshold: 0.40,
@@ -132,20 +141,73 @@ export class LexBotConstruct extends Construct {
         },
         intents: [{
           name: lexIntentName,
-          description: 'Intent to handle general questions about books',
+          description: 'Greeting',
           sampleUtterances: [
             {
-              utterance: 'Tell me about a book'
+              utterance: 'Hi'
             },
             {
-              utterance: 'What books do you know about?'
+              utterance: 'How are you'
             }
           ],
           fulfillmentCodeHook: {
             enabled: true
           }
-        }]
-      }]
+        },
+        {
+          name: 'FallbackIntent', // Explicitly reference fallback intent
+          description: 'Default fallback intent',
+          parentIntentSignature: 'AMAZON.FallbackIntent',
+          fulfillmentCodeHook: { enabled: true },
+        }
+        ]
+      }],
+      autoBuildBotLocales: true,
+      testBotAliasSettings: testBotAliasSettingsProperty
+    });
+
+    // Publish a numeric version of the bot
+    const botVersion = new lex.CfnBotVersion(this, 
+      `${cdk.Stack.of(this).stackName}-lexbotversion`,
+      {
+      botId: this.lexBot.attrId, // Reference the bot ID
+      botVersionLocaleSpecification: [
+        {
+          localeId: 'en_US', // Specify the locale
+          botVersionLocaleDetails: {
+            sourceBotVersion: 'DRAFT', // Publish from the DRAFT version
+          },
+        },
+      ],
+    });
+
+    // Associate Lambda with Lex Bot
+    const botAlias = new lex.CfnBotAlias(this, 
+      `${cdk.Stack.of(this).stackName}-lexbotalias`,
+      {
+      botId: this.lexBot.attrId,
+      botAliasName: 'TestChatBotAlias',
+      botVersion: botVersion.attrBotVersion,
+      botAliasLocaleSettings: [
+        {
+          localeId: 'en_US', // Specify the locale
+          botAliasLocaleSetting: {
+            enabled: true, // Enable the locale
+            codeHookSpecification: {
+              lambdaCodeHook: {
+                codeHookInterfaceVersion: '1.0', // Lambda interface version
+                lambdaArn: lexFallbackFunction.functionArn, // ARN of the Lambda function
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    // Lex bot alias output
+    new cdk.CfnOutput(this, 'LexBotAlias', {
+      value: botAlias.attrBotAliasId,
+      description: 'Alias ID for Lex bot',
     });
 
     NagSuppressions.addResourceSuppressions(
@@ -157,7 +219,7 @@ export class LexBotConstruct extends Construct {
         },
       ],
       true,
-    );    
+    );
 
   }
 }
