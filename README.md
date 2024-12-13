@@ -149,6 +149,19 @@ https://<api unique id>.execute-api.us-east-1.amazonaws.com/demo
 1. Update `RESTAURANT_API_BASE_URL` in `app.config`
 1. Deploy the CDK stacks with command `cdk deploy bedrockStack`
 
+### Test the agent from Bedrock AWS conole
+
+1. Goto [Amazon Bedrock AWS console](https:/console.aws.amazon.com/bedrock/home)
+2. Select Agents, select the agent created
+3. Select Test
+4. Enter prompt such as `make a reservation for Richard on 23 December 2024 at 8pm for 2 people`
+5. If the Agent works correctly, the agent should response with successful message, such as
+
+```
+Your reservation has been confirmed! Here are the details: - Date: December 23, 2024 - Time: 8:00 PM - Number of guests: 2 - Booking name: Richard - Booking ID: 5ac6a053 Please keep your booking ID for future reference.
+```
+![image](assets/Bedrock_agent_test.png)
+
 
 ## Security
 

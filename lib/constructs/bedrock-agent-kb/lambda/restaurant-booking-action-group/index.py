@@ -13,18 +13,15 @@ from aws_lambda_powertools.event_handler.openapi.params import Body, Query, Path
 
 tracer = Tracer()
 logger = Logger()
-app = BedrockAgentResolver()
-
-class CreateBookRequest(BaseModel):
-    booking_date: date = Field(..., description="The date of the booking")
-    name: str = Field(..., description="Name to identify your reservation")
-    booking_time: time = Field(..., description="The hour of the booking")
-    num_guests: int = Field(..., description="The number of guests for the booking")
+app = BedrockAgentResolver(debug=False)
 
 @app.post("/create_booking", description="Create a booking")
 @tracer.capture_method
 def create_booking(
-    booking_details: Annotated[CreateBookRequest, Body(description="Details of the booking request")]
+    booking_date: Annotated[date, Body(description="The date of the booking")],
+    booking_time: Annotated[time, Body(description="The time of the booking, in HH:MM")],
+    booking_name: Annotated[str, Body(description="Name of the person reservation to be made to")],
+    num_guests: Annotated[int, Body(description="The number of guests for the booking")],
     ) -> Dict:
     """Create a new restaurant booking.
     
@@ -45,17 +42,16 @@ def create_booking(
     if not base_url:
         raise ValueError("RESTAURANT_API_BASE_URL environment variable is not set")
 
-    # booking_details = booking_details.model_dump_json()
-    book_requests = {
-        "date": booking_details.booking_date.strftime("%Y-%m-%d"),
-        "name": booking_details.name,
-        "hour": booking_details.booking_time.strftime("%H:%M"),
-        "num_guests": booking_details.num_guests
+    booking_requests = {
+        "date": booking_date.strftime("%Y-%m-%d"),
+        "name": booking_name,
+        "hour": booking_time.strftime("%H:%M"),
+        "num_guests": num_guests
     }
-    
+
     url = f"{base_url}/booking"
-    logger.debug(f"Booking details: {book_requests}")
-    response = requests.post(url, json=book_requests)
+    logger.debug(f"Booking details: {booking_requests}")
+    response = requests.post(url, json=booking_requests)
     logger.debug(f"Response: {response}")
     response.raise_for_status()
     return response.json()
@@ -134,40 +130,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if not base_url:
             raise ValueError("RESTAURANT_API_BASE_URL environment variable is not set")
         
-        # Initialize the API client
-        # client = RestaurantBookingClient(base_url)
-
         logger.debug(f"Event: {event}")
         logger.debug(f"Context: {context}")
 
         return app.resolve(event, context)  
-    
-        # # Extract API details from the event
-        # api_path = event.get('apiPath', '')
-        # http_method = event.get('httpMethod', '').upper()
-        # request_body = event.get('requestBody', {})
-        # path_parameters = event.get('pathParameters', {})
-        
-        # # Handle booking operations based on HTTP method and path
-        # if http_method == 'POST' and api_path == '/booking':
-        #     response = client.create_booking(request_body)
-        # elif http_method == 'GET' and '/booking' in api_path:
-        #     booking_id = path_parameters.get('id')
-        #     if not booking_id:
-        #         raise ValueError("Booking ID is required for GET operation")
-        #     response = client.get_booking(booking_id)
-        # elif http_method == 'DELETE' and '/booking' in api_path:
-        #     booking_id = path_parameters.get('id')
-        #     if not booking_id:
-        #         raise ValueError("Booking ID is required for DELETE operation")
-        #     response = client.delete_booking(booking_id)
-        # else:
-        #     raise ValueError(f"Unsupported operation: {http_method} {api_path}")
-        
-        # return {
-        #     "messageVersion": "1.0",
-        #     "response": response
-        # }
         
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")

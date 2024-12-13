@@ -15,19 +15,12 @@
             "post": {
                 "summary": "POST /create_booking",
                 "description": "Create a booking",
-                "operationId": "create_booking_create_booking_post",
+                "operationId": "create_booking",
                 "requestBody": {
-                    "description": "Details of the booking request",
                     "content": {
                         "application/json": {
                             "schema": {
-                                "allOf": [
-                                    {
-                                        "$ref": "#/components/schemas/CreateBookRequest"
-                                    }
-                                ],
-                                "title": "Booking Details",
-                                "description": "Details of the booking request"
+                                "$ref": "#/components/schemas/Body_create_booking_create_booking_post"
                             }
                         }
                     },
@@ -62,7 +55,7 @@
             "get": {
                 "summary": "GET /get_booking/{booking_id}",
                 "description": "Retrieve a booking",
-                "operationId": "get_booking_get_booking__booking_id__get",
+                "operationId": "get_booking",
                 "parameters": [
                     {
                         "description": "The ID of the booking to retrieve",
@@ -105,7 +98,7 @@
             "delete": {
                 "summary": "DELETE /delete_booking/{booking_id}",
                 "description": "Cancel a booking",
-                "operationId": "delete_booking_delete_booking__booking_id__delete",
+                "operationId": "delete_booking",
                 "parameters": [
                     {
                         "description": "The ID of the booking to deleted",
@@ -148,7 +141,7 @@
     },
     "components": {
         "schemas": {
-            "CreateBookRequest": {
+            "Body_create_booking_create_booking_post": {
                 "properties": {
                     "booking_date": {
                         "type": "string",
@@ -156,16 +149,16 @@
                         "title": "Booking Date",
                         "description": "The date of the booking"
                     },
-                    "name": {
-                        "type": "string",
-                        "title": "Name",
-                        "description": "Name to identify your reservation"
-                    },
                     "booking_time": {
                         "type": "string",
                         "format": "time",
                         "title": "Booking Time",
-                        "description": "The hour of the booking"
+                        "description": "The time of the booking, in HH:MM"
+                    },
+                    "booking_name": {
+                        "type": "string",
+                        "title": "Booking Name",
+                        "description": "Name of the person reservation to be made to"
                     },
                     "num_guests": {
                         "type": "integer",
@@ -176,11 +169,11 @@
                 "type": "object",
                 "required": [
                     "booking_date",
-                    "name",
                     "booking_time",
+                    "booking_name",
                     "num_guests"
                 ],
-                "title": "CreateBookRequest"
+                "title": "Body_create_booking_create_booking_post"
             },
             "HTTPValidationError": {
                 "properties": {
