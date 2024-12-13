@@ -1,0 +1,234 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Restaurant booking API",
+        "description": "API for booking a table in the restaurant",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/"
+        }
+    ],
+    "paths": {
+        "/create_booking": {
+            "post": {
+                "summary": "POST /create_booking",
+                "description": "Create a booking",
+                "operationId": "create_booking_create_booking_post",
+                "requestBody": {
+                    "description": "Details of the booking request",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/CreateBookRequest"
+                                    }
+                                ],
+                                "title": "Booking Details",
+                                "description": "Details of the booking request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "title": "Return"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/get_booking/{booking_id}": {
+            "get": {
+                "summary": "GET /get_booking/{booking_id}",
+                "description": "Retrieve a booking",
+                "operationId": "get_booking_get_booking__booking_id__get",
+                "parameters": [
+                    {
+                        "description": "The ID of the booking to retrieve",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Booking Id",
+                            "description": "The ID of the booking to retrieve"
+                        },
+                        "name": "booking_id",
+                        "in": "path"
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "title": "Return"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/delete_booking/{booking_id}": {
+            "delete": {
+                "summary": "DELETE /delete_booking/{booking_id}",
+                "description": "Cancel a booking",
+                "operationId": "delete_booking_delete_booking__booking_id__delete",
+                "parameters": [
+                    {
+                        "description": "The ID of the booking to deleted",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "title": "Booking Id",
+                            "description": "The ID of the booking to deleted"
+                        },
+                        "name": "booking_id",
+                        "in": "path"
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "title": "Return"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CreateBookRequest": {
+                "properties": {
+                    "booking_date": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Booking Date",
+                        "description": "The date of the booking"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "description": "Name to identify your reservation"
+                    },
+                    "booking_time": {
+                        "type": "string",
+                        "format": "time",
+                        "title": "Booking Time",
+                        "description": "The hour of the booking"
+                    },
+                    "num_guests": {
+                        "type": "integer",
+                        "title": "Num Guests",
+                        "description": "The number of guests for the booking"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "booking_date",
+                    "name",
+                    "booking_time",
+                    "num_guests"
+                ],
+                "title": "CreateBookRequest"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "restaurant"
+        }
+    ]
+}

@@ -79,11 +79,76 @@ Defined in `action-group.yaml`, this OpenAPI specification describes the availab
 
 ## Getting Started
 
-1. Download the sample books by running `bash scripts/load-kb.sh`
-1. Deploy the CDK stacks
-2. Configure the Lex bot with appropriate intents
-3. Set up the Bedrock Agent with the provided Knowledge Base
-4. Test the integration using the Lex console or API
+This Bedrock-based Chatbot reuse the same knowledge base and API as [DoiT Amazon Q Business Workshop](https://github.com/doitintl/amazon-q-business-workshop.git)
+
+### Step 1: Create app-config.json
+1. Create `app-config.json` from `app-config.json.template`
+
+### Step 1: Upload the document data
+
+1. Runs `git clone https://github.com/doitintl/amazon-q-business-workshop.git`
+2. Copy the knowledge base documents from the [Amazon Q Business workshop repository](https://github.com/doitintl/amazon-q-business-workshop/tree/main/knowledge/doc) to local folder, `./sample_data`.
+
+   You should get the following folder
+
+   ```
+   lex-bedrock-agent-kb/sample_data
+   ├── Restaurant_Childrens_Menu.pdf
+   ├── Restaurant_Dinner_Menu.pdf
+   └── Restaurant_week_specials.pdf
+   ```
+
+5. Update `s3DataSource.s3bucketName` in `app-config.json` with the bucket name, for example, `<AWS accound ID>-<AWS region>-datasource`
+3. Runs the CDK stack with context values `cdk deploy s3DataSourceStack`
+
+4. Upons successful creation of the stack and documents copied, you should see the successful deployment:
+   ```
+   ✅  s3DataSourceStack
+
+   ✨  Deployment time: 76.56s
+
+   Outputs:
+   s3DataSourceStack.DocumentBucket = s3-data-source-<AWS account ID>
+   Stack ARN:
+   arn:aws:cloudformation:<AWS account region>:<AWS account ID>:stack/s3DataSourceStack/<CFN stack ARN>
+
+   ✨  Total time: 90.76s
+   ```
+
+### Step 2: Creates the Hotel booking API
+
+In this workshop we will demonstrate the Bedrock Agent action groups, and we will be using the [hotel booking API stack](https://github.com/doitintl/amazon-q-business-workshop.git)
+
+1. If you have not done this in step 1, runs `git clone https://github.com/doitintl/amazon-q-business-workshop.git`
+2. Follow the steps in seting up the [Hotel booking system](https://github.com/doitintl/amazon-q-business-workshop/tree/main/custom#setting-up-a-system--plugin)
+
+#### AWS CLI
+
+You can use the CLI to create the stack
+
+```
+$ aws cloudformation create-stack --stack-name hotelbooking-api --template-body file://amazon-q-business-workshop
+/cf-restaurant-booking-customplugin.yaml --capabilities CAPABILITY_NAMED_IAM
+```
+
+Then wait for completion
+```
+$ aws cloudformation wait stack-create-complete --stack-name hotelbooking-api
+```
+
+Record the `ApiEndpoint` from this API stack to be used as in the Bedrock Agent action groups:
+
+```
+$  aws cloudformation describe-stacks --stack-name hotelbooking-api --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' --output text
+
+https://<api unique id>.execute-api.us-east-1.amazonaws.com/demo
+```
+
+### Step 3: Creates the Bedrock Agent and knowledge base
+
+1. Update `RESTAURANT_API_BASE_URL` in `app.config`
+1. Deploy the CDK stacks with command `cdk deploy bedrockStack`
+
 
 ## Security
 

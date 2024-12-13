@@ -9,34 +9,48 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambda_python from '@aws-cdk/aws-lambda-python-alpha';
 import * as opensearchserverless from '@cdklabs/generative-ai-cdk-constructs/lib/cdk-lib/opensearchserverless';
 
+export interface ActionGroupConfig{
+  lambdaFunctionName: string,
+  lambdaFunctionRelativeToConstructPath: string,
+  openapiSpecRelativeToConstructPath: string,
+  environments?: {[key: string]: string}
+}
+
 export interface BedrockKbProps {
   readonly knowledgebaseDataSourceName: string
-  readonly bedrockKnowledgeS3Datasource: s3.IBucket;
+  readonly bedrockKnowledgeS3Bucket: string;
+  readonly actionGroups: ActionGroupConfig[]
 }
 
 export class BedrockKbConstruct extends Construct {
-  // public readonly docBucket: s3.IBucket;
   public readonly bedrockAgent: bedrock.Agent;
   public readonly agentAlias: bedrock.IAgentAlias;
 
   constructor(scope: Construct, id: string, props: BedrockKbProps) {
     super(scope, id);
 
+    const inferenceProfile = bedrock.CrossRegionInferenceProfile.fromConfig({
+      geoRegion: bedrock.CrossRegionInferenceProfileRegion.US,
+      model: bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_3_5_SONNET_V2_0,
+    });
+
     this.bedrockAgent = new bedrock.Agent(this, 
       `${cdk.Stack.of(this).stackName}-agent`, 
       {
         name: `${cdk.Stack.of(this).stackName}-agent`,
-        foundationModel: bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_V2_1,
-        instruction: 'You are a helpful and friendly agent that answers questions about literature.',
-        // knowledgeBases: [kb],
+        foundationModel: inferenceProfile,
+        instruction: 'You are a helpful and friendly agent that answers questions about restaurant booking.',
         enableUserInput: true,
         shouldPrepareAgent: true
       }
     );
 
-    const kb = this.addS3KnowledgeBase(props.knowledgebaseDataSourceName, props.bedrockKnowledgeS3Datasource);
+    const kb = this.addS3KnowledgeBase(
+      props.knowledgebaseDataSourceName, 
+      props.bedrockKnowledgeS3Bucket
+    );
     this.bedrockAgent.addKnowledgeBase(kb);
-    this.addActionGroup();
+    this.addActionGroups(props.actionGroups);
 
     this.agentAlias = this.bedrockAgent.addAlias({
       aliasName: 'agent01',
@@ -60,6 +74,16 @@ export class BedrockKbConstruct extends Construct {
     );        
     NagSuppressions.addResourceSuppressionsByPath(
       cdk.Stack.of(this),
+      `/${cdk.Stack.of(this)}/BedrockKb/bedrockStack-agent/Role/DefaultPolicy/Resource`,
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'foundation-model role uses a wildcard and managed by CDK.',
+        },
+      ],
+    );            
+    NagSuppressions.addResourceSuppressionsByPath(
+      cdk.Stack.of(this),
       `/${cdk.Stack.of(this)}/OpenSearchIndexCRProvider/CustomResourcesFunction/Resource`,
       [
         {
@@ -71,7 +95,7 @@ export class BedrockKbConstruct extends Construct {
     );
   }
 
-  public addS3KnowledgeBase(knowledgeBaseName: string, bedrockKnowledgeS3Datasource: s3.IBucket ):bedrock.KnowledgeBase{
+  public addS3KnowledgeBase(knowledgeBaseName: string, bedrockKnowledgeS3Bucket: string ):bedrock.KnowledgeBase{
     // Create access logs bucket
     const accesslogBucket = new s3.Bucket(this, `${cdk.Stack.of(this).stackName}-${knowledgeBaseName}-accesslog`, {
       enforceSSL: true,
@@ -89,9 +113,9 @@ export class BedrockKbConstruct extends Construct {
     // Create vector store
     const vectorStore = new opensearchserverless.VectorCollection(
       this,
-      `${cdk.Stack.of(this).stackName}-vectorstore`,
+      `${cdk.Stack.of(this).stackName}-${knowledgeBaseName}-vectorstore`,
       {
-        collectionName: 'collection-name',
+        collectionName: knowledgeBaseName,
         standbyReplicas:
           process.env.ENV === 'prd'
             ? opensearchserverless.VectorCollectionStandbyReplicas.ENABLED
@@ -113,7 +137,7 @@ export class BedrockKbConstruct extends Construct {
     const s3DataSource = new bedrock.S3DataSource(this, 
       `${cdk.Stack.of(this).stackName}-datasource`, 
       {
-        bucket: bedrockKnowledgeS3Datasource,
+        bucket: cdk.aws_s3.Bucket.fromBucketName(this, `${cdk.Stack.of(this).stackName}-s3bucket`, bedrockKnowledgeS3Bucket),
         knowledgeBase: kb,
         dataSourceName: `${cdk.Stack.of(this).stackName}-knowledgebase-s3datasource`,
         chunkingStrategy: bedrock.ChunkingStrategy.fixedSize({
@@ -138,43 +162,59 @@ export class BedrockKbConstruct extends Construct {
 
   }
 
-  private addActionGroup(){
-    const actionGroupFunction = new lambda_python.PythonFunction(this, 
-      `${cdk.Stack.of(this).stackName}-functions`, 
-      {
-        functionName: `${cdk.Stack.of(this).stackName}-functions`,
-        runtime: lambda.Runtime.PYTHON_3_13,
-        entry: path.join(__dirname, './lambda/gutendex-action-group'),
-        layers: [lambda.LayerVersion.fromLayerVersionArn(this, 'PowerToolsLayer', 
-          `arn:aws:lambda:${cdk.Stack.of(this).region}:017000801446:layer:AWSLambdaPowertoolsPythonV3-python313-x86_64:4`)],
-        timeout: cdk.Duration.minutes(2)
-      }
-    );
+  private addActionGroups(actionGroupsParam: ActionGroupConfig[]){
 
-    const actionGroup = new AgentActionGroup(this, 
-      `${cdk.Stack.of(this).stackName}-action-group`,
-      {
-        actionGroupName: `${cdk.Stack.of(this).stackName}-action-group`,
-        description: 'Use these functions to get information about the books in the library.',
-        actionGroupExecutor: {
-          lambda: actionGroupFunction
-        },
-        actionGroupState: "ENABLED",
-        apiSchema: bedrock.ApiSchema.fromAsset(path.join(__dirname, './action-group.yaml')),
-      }
-    );
+    const actionGroups:AgentActionGroup[] = []
 
-    this.bedrockAgent.addActionGroups([actionGroup]);
-
-    NagSuppressions.addResourceSuppressions(
-      actionGroupFunction,
-      [
+    actionGroupsParam.forEach((actionGroupConfig: ActionGroupConfig) => {
+      let lambdaFunction = new lambda_python.PythonFunction(this, 
+        `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}`, 
         {
-          id: 'AwsSolutions-IAM4',
-          reason: 'ActionGroup Lambda uses the AWSLambdaBasicExecutionRole AWS Managed Policy.',
+          functionName: actionGroupConfig.lambdaFunctionName,
+          runtime: lambda.Runtime.PYTHON_3_13,
+          entry: path.join(__dirname, actionGroupConfig.lambdaFunctionRelativeToConstructPath),
+          layers: [lambda.LayerVersion.fromLayerVersionArn(this, `${actionGroupConfig.lambdaFunctionName}-PowerToolsLayer`, 
+            `arn:aws:lambda:${cdk.Stack.of(this).region}:017000801446:layer:AWSLambdaPowertoolsPythonV3-python313-x86_64:4`)],
+          timeout: cdk.Duration.minutes(2),
+          environment: {
+            POWERTOOLS_LOG_LEVEL: "DEBUG"
+          }
         }
-      ],
-      true,
-    );      
+      );
+
+      if(actionGroupConfig.environments){
+        for (let key in actionGroupConfig.environments){
+          lambdaFunction.addEnvironment(
+            key, actionGroupConfig.environments[key]
+          )
+        }        
+      };
+
+      actionGroups.push(new AgentActionGroup(this, 
+        `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}-action-group`,
+        {
+          actionGroupName: `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}-action-group`,
+          description: 'Use these functions to get information about the books in the library.',
+          actionGroupExecutor: {
+            lambda: lambdaFunction
+          },
+          actionGroupState: "ENABLED",
+          apiSchema: bedrock.ApiSchema.fromAsset(path.join(__dirname, actionGroupConfig.openapiSpecRelativeToConstructPath)),
+        }
+      ))
+
+      NagSuppressions.addResourceSuppressions(
+        lambdaFunction,
+        [
+          {
+            id: 'AwsSolutions-IAM4',
+            reason: 'ActionGroup Lambda uses the AWSLambdaBasicExecutionRole AWS Managed Policy.',
+          }
+        ],
+        true,
+      );            
+    });
+
+    this.bedrockAgent.addActionGroups(actionGroups);
   }
 }

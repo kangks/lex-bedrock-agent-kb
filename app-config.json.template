@@ -1,0 +1,19 @@
+{
+    "s3DataSource":{
+        "documentDataFolder": "./sample_data",
+        "s3bucketName": "<AWS account ID>-datasource"
+    },
+    "knowledgebase":{
+        "knowledgebaseDataSourceName": "restaurant-s3-datasource"
+    },
+    "actionGroups":[
+        {
+            "lambdaFunctionName": "restaurant",
+            "lambdaFunctionRelativeToConstructPath":"./lambda/restaurant-booking-action-group",
+            "openapiSpecRelativeToConstructPath":"./restaurant-booking.json",
+            "environments":{
+                "RESTAURANT_API_BASE_URL": "https://<unique ID>.execute-api.us-east-1.amazonaws.com/demo"
+            }
+        }
+    ]
+}
