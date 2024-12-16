@@ -148,6 +148,19 @@ https://<api unique id>.execute-api.us-east-1.amazonaws.com/demo
 
 1. Update `RESTAURANT_API_BASE_URL` in `app.config`
 1. Deploy the CDK stacks with command `cdk deploy bedrockStack`
+2. Upons successful creation of the stack and documents copied, you should see the successful deployment, take note of the `bedrockAgentId` and `bedrockAgentAliasId`:
+
+```
+bedrockStack: creating CloudFormation changeset...
+
+  ✅  bedrockStack
+
+✨  Deployment time: 47.61s
+
+Outputs:
+bedrockStack.BedrockKbbedrockAgentAliasId2A0E19AF = 8LVWXKS1EO
+bedrockStack.BedrockKbbedrockAgentId55BCE64E = TVWOE360IC
+```
 
 ### Test the agent from Bedrock AWS conole
 

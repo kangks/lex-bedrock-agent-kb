@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "hotel-booking-action-group"
+name = "restaurant-finder-openapi"
 version = "0.1.0"
 description = ""
 authors = ["Richard Kang <richard@doit.com>"]
@@ -7,9 +7,8 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-requests = "^2.32.0"
-aws-lambda-powertools = "^3.3.0"
-aws-xray-sdk = "^2.14.0"
+serpapi = "^0.1.5"
+google-search-results = "^2.4.2"
 
 [tool.poetry.group.dev.dependencies]
 aws-lambda-powertools = "^3.3.0"

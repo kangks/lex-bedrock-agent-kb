@@ -1,0 +1,115 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Restaurant Finder Bot API",
+        "description": "Restaurant Finder API for searching the restaurant near my",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/"
+        }
+    ],
+    "paths": {
+        "/get_restaurants": {
+            "get": {
+                "summary": "GET /get_restaurants",
+                "description": "Gets nearby restaurant results from Google Search",
+                "operationId": "get_restaurants",
+                "parameters": [
+                    {
+                        "description": "food to be searched",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Food",
+                            "description": "food to be searched"
+                        },
+                        "name": "food",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "object"
+                                    },
+                                    "type": "array",
+                                    "title": "Return"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "food"
+        },
+        {
+            "name": "restaurant"
+        }
+    ]
+}

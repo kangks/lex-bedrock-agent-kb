@@ -57,6 +57,15 @@ export class BedrockKbConstruct extends Construct {
       description:'alias for bedrock agent'
     });
 
+    new cdk.CfnOutput(this, 'bedrockAgentId', {
+      exportName: `${cdk.Stack.of(this).stackName}-bedrockAgentId`,
+      value: this.bedrockAgent.agentId});
+
+    new cdk.CfnOutput(this, 'bedrockAgentAliasId', {
+      exportName: `${cdk.Stack.of(this).stackName}-bedrockAgentAliasId`,
+      value: this.agentAlias.aliasId ?? ""});
+
+
     NagSuppressions.addResourceSuppressionsByPath(
       cdk.Stack.of(this),
       `/${cdk.Stack.of(this)}/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole`,
@@ -194,7 +203,6 @@ export class BedrockKbConstruct extends Construct {
         `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}-action-group`,
         {
           actionGroupName: `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}-action-group`,
-          description: 'Use these functions to get information about the books in the library.',
           actionGroupExecutor: {
             lambda: lambdaFunction
           },
