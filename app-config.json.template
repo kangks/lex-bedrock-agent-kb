@@ -17,8 +17,8 @@
         },
         {
             "lambdaFunctionName": "restaurant-booking-management",
-            "lambdaFunctionRelativeToConstructPath":"../../../restaurant_planner/restaurant-management-action-group",
-            "openapiSpecRelativeToConstructPath":"../../../restaurant_planner/restaurant-management-action-group/restaurant-booking.json",
+            "lambdaFunctionRelativeToConstructPath":"../../../restaurant_planner/restaurant-management-openapi",
+            "openapiSpecRelativeToConstructPath":"../../../restaurant_planner/restaurant-management-openapi/restaurant-booking.json",
             "environments":{
                 "RESTAURANT_API_BASE_URL": "https://<unique ID>.execute-api.us-east-1.amazonaws.com/demo"
             }

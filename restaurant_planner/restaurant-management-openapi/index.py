@@ -15,7 +15,10 @@ tracer = Tracer()
 logger = Logger()
 app = BedrockAgentResolver(debug=False)
 
-@app.post("/create_booking", description="Create a booking")
+@app.post("/create_booking", 
+          description="Create a restaurant booking for the reservation",
+          operation_id="1" # to meet Claude 3.5 requirement of HttpVerb__ActionName__OperationId matches the regex ^[a-zA-Z0-9_-]{1,64}$ https://docs.anthropic.com/en/docs/build-with-claude/tool-use#specifying-tools
+)
 @tracer.capture_method
 def create_booking(
     booking_date: Annotated[date, Body(description="The date of the booking")],
@@ -56,9 +59,12 @@ def create_booking(
     response.raise_for_status()
     return response.json()
 
-@app.get("/get_booking/{booking_id}", description="Retrieve a booking")
+@app.get("/get_bookings", 
+         description="Retrieve a restaurant reservation from a given booking ID or booking number",
+         operation_id="2"
+         )
 @tracer.capture_method
-def get_booking(
+def get_bookings(
     booking_id: Annotated[str, Path(description="The ID of the booking to retrieve")]  
     ) -> Dict:
     """Retrieve details of a restaurant booking.
@@ -83,9 +89,12 @@ def get_booking(
     response.raise_for_status()
     return response.json()
 
-@app.delete("/delete_booking/{booking_id}", description="Cancel a booking")
+@app.delete("/delete_bookings", 
+            description="Cancel a restaurant reservation from a given booking ID or booking number",
+            operation_id="3"
+            )
 @tracer.capture_method
-def delete_booking(
+def delete_bookings(
     booking_id: Annotated[str, Path(max_length=200, strict=True, description="The ID of the booking to deleted")]
     ) -> Dict:
     """Delete a restaurant booking.
