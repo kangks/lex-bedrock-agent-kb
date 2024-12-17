@@ -13,7 +13,7 @@ export interface ActionGroupConfig{
   lambdaFunctionName: string,
   lambdaFunctionRelativeToConstructPath: string,
   openapiSpecRelativeToConstructPath: string,
-  environments?: {[key: string]: string}
+  functionEnvironments?: {[key: string]: any}
 }
 
 export interface BedrockKbProps {
@@ -39,7 +39,7 @@ export class BedrockKbConstruct extends Construct {
       {
         name: `${cdk.Stack.of(this).stackName}-agent`,
         foundationModel: inferenceProfile,
-        instruction: 'You are a helpful and friendly agent that answers questions about restaurant booking.',
+        instruction: 'You are Eva, a friendly and knowledgeable AI assistant helping clients to find a restaurant that match the food and location prefered or required, and create a new booking for the restaurant reservation, cancel an existing booking, or modify an existing booking by canceling the booking and rebook a new reservation.',
         enableUserInput: true,
         shouldPrepareAgent: true
       }
@@ -171,7 +171,7 @@ export class BedrockKbConstruct extends Construct {
 
   }
 
-  private addActionGroups(actionGroupsParam: ActionGroupConfig[]){
+  public addActionGroups(actionGroupsParam: ActionGroupConfig[]){
 
     const actionGroups:AgentActionGroup[] = []
 
@@ -191,15 +191,15 @@ export class BedrockKbConstruct extends Construct {
         }
       );
 
-      if(actionGroupConfig.environments){
-        for (let key in actionGroupConfig.environments){
+      if(actionGroupConfig.functionEnvironments){
+        for (let key in actionGroupConfig.functionEnvironments){
           lambdaFunction.addEnvironment(
-            key, actionGroupConfig.environments[key]
+            key, actionGroupConfig.functionEnvironments[key]
           )
         }        
       };
 
-      actionGroups.push(new AgentActionGroup(this, 
+      let agentActionGroup = new AgentActionGroup(this, 
         `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}-action-group`,
         {
           actionGroupName: `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}-action-group`,
@@ -208,8 +208,13 @@ export class BedrockKbConstruct extends Construct {
           },
           actionGroupState: "ENABLED",
           apiSchema: bedrock.ApiSchema.fromAsset(path.join(__dirname, actionGroupConfig.openapiSpecRelativeToConstructPath)),
+          skipResourceInUseCheckOnDelete: true 
         }
-      ))
+      );
+
+      console.log(">>agentActionGroup", agentActionGroup);
+
+      actionGroups.push(agentActionGroup);
 
       NagSuppressions.addResourceSuppressions(
         lambdaFunction,
@@ -222,7 +227,6 @@ export class BedrockKbConstruct extends Construct {
         true,
       );            
     });
-
     this.bedrockAgent.addActionGroups(actionGroups);
   }
 }

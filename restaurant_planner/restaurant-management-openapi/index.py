@@ -65,7 +65,7 @@ def create_booking(
          )
 @tracer.capture_method
 def get_bookings(
-    booking_id: str
+    booking_id: Annotated[str, Query(description="Booking ID for retrieval of bookings")]
     ) -> Dict:
     """Retrieve details of a restaurant booking.
     
@@ -95,7 +95,7 @@ def get_bookings(
             )
 @tracer.capture_method
 def delete_bookings(
-    booking_id: str
+    booking_id: Annotated[str, Query(description="Booking ID for cancelation of bookings")]
     ) -> Dict:
     """Delete a restaurant booking.
     

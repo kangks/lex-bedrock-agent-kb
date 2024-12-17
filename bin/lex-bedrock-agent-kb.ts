@@ -40,5 +40,13 @@ const lexBot = new LexBotConstruct(new cdk.Stack(app, 'LexBotStack'), 'LexBot', 
 // bedrockKb.bedrockAgent.addKnowledgeBase(kb);
 // this.addActionGroup();
 
-
 app.synth();
+
+// {
+//   "lambdaFunctionName": "restaurant-finder",
+//   "lambdaFunctionRelativeToConstructPath":"../../../restaurant_planner/restaurant-finder-openapi",
+//   "openapiSpecRelativeToConstructPath":"../../../restaurant_planner/restaurant-finder-openapi/restaurant-finder.json",
+//   "functionEnvironments":{
+//       "SERPAPI_SERPAPI_API_KEY": "xyz"
+//   }
+// }

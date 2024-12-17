@@ -15,16 +15,19 @@ tracer = Tracer()
 logger = Logger()
 app = BedrockAgentResolver()
 
-@app.get("/get_restaurants", description="Gets nearby restaurant results from Google Search")
+@app.get("/get_restaurants", 
+         description="Gets nearby restaurant results from Google Search",
+         operation_id="1"
+         )
 @tracer.capture_method
 def get_restaurants(
-    food: Annotated[str, Query(description="food to be searched")]
+    food_type: Annotated[str, Query(description="restaurant serving the food type to be searched")]
 ) -> List[dict]:
 
     params = {
         'api_key': SERPAPI_API_KEY,
         'engine': 'google_food',               # SerpApi search engine
-        'q': food
+        'q': food_type
     }    
 
     search = GoogleSearch(params)
