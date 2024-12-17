@@ -39,7 +39,7 @@ export class BedrockKbConstruct extends Construct {
       {
         name: `${cdk.Stack.of(this).stackName}-agent`,
         foundationModel: inferenceProfile,
-        instruction: 'You are Eva, a friendly and knowledgeable AI assistant helping clients to find a restaurant that match the food and location prefered or required, and create a new booking for the restaurant reservation, cancel an existing booking, or modify an existing booking by canceling the booking and rebook a new reservation.',
+        instruction: 'You are a restaurant reservation agent that has access to restaurant menu knowledge. You can find a local restaurant that match the food preference of the client, make a reservation on behalf of the client with details of date, time, number of people, and the name of the reservation, cancel the reservation by booking ID, or modify the reservation by canceling the booking and recreate a new reservation. You can respond to questions about menu, and the reservation details.',
         enableUserInput: true,
         shouldPrepareAgent: true
       }
@@ -137,8 +137,8 @@ export class BedrockKbConstruct extends Construct {
       `${cdk.Stack.of(this).stackName}-knowledgebase`,
       {
         embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V2_256,
-        instruction: 'Use this knowledge base to answer questions about books. ' +
-          'It contains the full text of novels. Please quote the books to explain your answers.',
+        instruction: 'Use this knowledge base to answer questions about restaurant menu. ' +
+          'It contains the full menu. Please quote the menu to explain your answers.',
         vectorStore: vectorStore
       }
     );

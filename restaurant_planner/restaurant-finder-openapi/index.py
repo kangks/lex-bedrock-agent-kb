@@ -1,7 +1,7 @@
 import os
 
-from typing import List
-from typing_extensions import Annotated
+from typing import List, Optional
+from typing_extensions import Annotated, DefaultDict, NotRequired
 
 from serpapi import GoogleSearch
 from aws_lambda_powertools import Logger, Tracer
@@ -19,7 +19,8 @@ app = BedrockAgentResolver()
          )
 @tracer.capture_method
 def get_restaurants(
-    food_type: Annotated[str, Query(description="restaurant serving the food type to be searched")]
+    food_type: Annotated[str, Query(description="restaurant serving the food type to be searched")],
+    # location: Annotated[Optional[str], Query(description="restaurant location to be searched")]
 ) -> List[dict]:
 
     SERPAPI_API_KEY = os.environ.get('SERPAPI_SERPAPI_API_KEY')
@@ -28,12 +29,21 @@ def get_restaurants(
 
     params = {
         'api_key': SERPAPI_API_KEY,
-        'engine': 'google_food',               # SerpApi search engine
-        'q': food_type
+        'engine': 'google',               # SerpApi search engine
+        'q': food_type,
+        'location': "Singapore", # location,
+        'google_domain': "google.com",
+        'gl': "us",
+        'hl': "en",
+        'device': "mobile",
+        'tbm': "lcl",
+        'num': "1"
     }    
 
     search = GoogleSearch(params)
     results = search.get_dict()
+
+    logger.debug(f"results: {results}")
 
     if results.get('error'):
         output = results['error'] + "Ask the user for more information related to the context received about the function."
@@ -41,6 +51,7 @@ def get_restaurants(
         output = results.get("local_results")
     else:
         output = results + "Unknown Error."
+    logger.debug(f"output: {output}")
     return output
 
 @logger.inject_lambda_context
