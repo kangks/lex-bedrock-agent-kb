@@ -146,6 +146,14 @@ https://<api unique id>.execute-api.us-east-1.amazonaws.com/demo
 
 ### Step 3: Creates the Bedrock Agent and knowledge base
 
+Before we create the Bedrock Agent stack, we need to generate the OpenAPI schema using [aws_lambda_powertools.event_handler.bedrock_agent.get_openapi_json_schema
+()](https://docs.powertools.aws.dev/lambda/python/stage/api/event_handler/bedrock_agent.html#aws_lambda_powertools.event_handler.bedrock_agent.BedrockAgentResolver.get_openapi_json_schema)
+
+#### Generate OpenAPI Spec
+1. Go to `restaurant_planner/restaurant-management-openapi/`
+2. Runs the command `poetry run python index.py > restaurant-booking.json`
+
+#### Update stack config and create the CDK stack
 1. Update `RESTAURANT_API_BASE_URL` in `app.config`
 1. Deploy the CDK stacks with command `cdk deploy bedrockStack`
 2. Upons successful creation of the stack and documents copied, you should see the successful deployment, take note of the `bedrockAgentId` and `bedrockAgentAliasId`:
@@ -174,6 +182,10 @@ bedrockStack.BedrockKbbedrockAgentId55BCE64E = TVWOE360IC
 Your reservation has been confirmed! Here are the details: - Date: December 23, 2024 - Time: 8:00 PM - Number of guests: 2 - Booking name: Richard - Booking ID: 5ac6a053 Please keep your booking ID for future reference.
 ```
 ![image](assets/Bedrock_agent_test.png)
+
+6. Try to get the reservation using the booking number, such as `retrieve my reservation using my Booking ID which is 371ca280`
+
+![image](assets/Bedrock_agent_test-get_bookings.png)
 
 
 ## Security

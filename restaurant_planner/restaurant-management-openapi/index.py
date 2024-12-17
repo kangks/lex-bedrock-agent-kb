@@ -15,7 +15,7 @@ tracer = Tracer()
 logger = Logger()
 app = BedrockAgentResolver(debug=False)
 
-@app.post("/create_booking", 
+@app.post("/booking", 
           description="Create a restaurant booking for the reservation",
           operation_id="1" # to meet Claude 3.5 requirement of HttpVerb__ActionName__OperationId matches the regex ^[a-zA-Z0-9_-]{1,64}$ https://docs.anthropic.com/en/docs/build-with-claude/tool-use#specifying-tools
 )
@@ -30,9 +30,9 @@ def create_booking(
     
     Args:
         booking_details (dict): Details of the booking request containing:
-            - date (str): The date of booking in YYYY-MM-DD format
-            - name (str): Name for the reservation
-            - hour (str): The time of booking in HH:MM format
+            - booking_date (str): The date of booking in YYYY-MM-DD format
+            - booking_name (str): Name for the reservation
+            - booking_time (str): The time of booking in HH:MM format
             - num_guests (str): Number of guests as a string
         
     Returns:
@@ -59,18 +59,18 @@ def create_booking(
     response.raise_for_status()
     return response.json()
 
-@app.get("/get_bookings", 
+@app.get("/bookings", 
          description="Retrieve a restaurant reservation from a given booking ID or booking number",
          operation_id="2"
          )
 @tracer.capture_method
 def get_bookings(
-    booking_id: Annotated[str, Path(description="The ID of the booking to retrieve")]  
+    booking_id: str
     ) -> Dict:
     """Retrieve details of a restaurant booking.
     
     Args:
-        booking_id (str): ID of the booking to retrieve
+        booking_id (str): booking ID of the reservation to retrieve
         
     Returns:
         dict: The booking details
@@ -89,13 +89,13 @@ def get_bookings(
     response.raise_for_status()
     return response.json()
 
-@app.delete("/delete_bookings", 
+@app.delete("/bookings", 
             description="Cancel a restaurant reservation from a given booking ID or booking number",
             operation_id="3"
             )
 @tracer.capture_method
 def delete_bookings(
-    booking_id: Annotated[str, Path(max_length=200, strict=True, description="The ID of the booking to deleted")]
+    booking_id: str
     ) -> Dict:
     """Delete a restaurant booking.
     
@@ -142,7 +142,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         logger.debug(f"Event: {event}")
         logger.debug(f"Context: {context}")
 
-        return app.resolve(event, context)  
+        bedrock_response = app.resolve(event, context)
+        return bedrock_response
         
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
@@ -160,7 +161,7 @@ if __name__ == "__main__":
         app.get_openapi_json_schema(
             title="Restaurant booking API",
             version="1.0.0",
-            description="API for booking a table in the restaurant",
-            tags=["restaurant"],
+            description="API to make a booking for a restaurant reservation",
+            tags=["restaurant", "food_agent"],
         ),
     )
