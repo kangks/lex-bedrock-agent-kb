@@ -1,6 +1,6 @@
 import os
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 from typing_extensions import Annotated, DefaultDict, NotRequired
 
 from serpapi import GoogleSearch
@@ -21,7 +21,7 @@ app = BedrockAgentResolver()
 def get_restaurants(
     food_type: Annotated[str, Query(description="restaurant serving the food type to be searched")],
     # location: Annotated[Optional[str], Query(description="restaurant location to be searched")]
-) -> List[dict]:
+) -> Dict:
 
     SERPAPI_API_KEY = os.environ.get('SERPAPI_SERPAPI_API_KEY')
     if not SERPAPI_API_KEY:
@@ -45,15 +45,41 @@ def get_restaurants(
 
     logger.debug(f"results: {results}")
 
-    if results.get('error'):
-        output = results['error'] + "Ask the user for more information related to the context received about the function."
-    elif results.get("local_results"):
-        output = results.get("local_results")
-    else:
-        output = results + "Unknown Error."
-    logger.debug(f"output: {output}")
-    return output
-
+    try:
+        response={}
+        if results.get('error'):
+            response = {
+                "error": "Ask the user for more information related to the context received about the function."
+            }
+        elif results.get("local_results"):
+            local_results = results.get("local_results")
+            if not local_results:
+                response = {
+                    "message": "No result found."
+                }
+            else:
+                response = {
+                    "restaurant_name": f"{local_results[0]['title']}",
+                    "restaurant_address": f"{local_results[0]['address']}",
+                    "restaurant_description": f"{local_results[0]['description']}",
+                }
+        else:
+            response = {
+                "error": results + "Unknown Error."
+            }
+    
+        logger.debug(f"response: {response}")
+        return response
+    
+    except Exception as e:
+        logger.error(f"Error processing request: {str(e)}")
+        return {
+            "messageVersion": "1.0",
+            "error": {
+                "message": str(e),
+                "code": "RestaurantFinderOperationError"
+            }
+    }
 @logger.inject_lambda_context
 @tracer.capture_lambda_handler
 def handler(event: dict, context: LambdaContext):
@@ -74,7 +100,7 @@ def handler(event: dict, context: LambdaContext):
             "messageVersion": "1.0",
             "error": {
                 "message": str(e),
-                "code": "BookingOperationError"
+                "code": "RestaurantFinderOperationError"
             }
         }
 

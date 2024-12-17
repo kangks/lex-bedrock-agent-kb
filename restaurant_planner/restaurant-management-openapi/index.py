@@ -85,7 +85,7 @@ def get_bookings(
     url = f"{base_url}/booking/{booking_id}"
     response = requests.get(url)
     logger.debug(f"Booking details: {booking_id}")
-    logger.debug(f"Response: {response}")
+    logger.debug(f"Response: {response.json()}")
     response.raise_for_status()
     return response.json()
 
