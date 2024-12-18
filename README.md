@@ -39,14 +39,56 @@ The infrastructure is organized into reusable constructs and a main stack:
 
 #### CDK Constructs
 
-1. **BedrockKbConstruct** (`lib/constructs/bedrock-agent-kb/bedrock-kb-construct.ts`)
-   - A reusable construct for Amazon Bedrock Knowledge Base integration
-   - Creates and manages S3 buckets for knowledge base data storage
-   - Supports configurable knowledge base data source names
-   - Handles S3 bucket configurations with proper security settings
-   - Properties:
-     - `knowledgebaseDataSourceName`: Name of the knowledge base data source
-     - `bedrockKnowledgeS3Datasource`: S3 bucket for storing knowledge base data
+##### Bedrock Agent Stack
+**BedrockKbConstruct** (`lib/constructs/bedrock-agent-kb/bedrock-kb-construct.ts`)
+
+1. Amazon Bedrock Agent
+   - Uses Claude 3.5 Sonnet v2.0 as the foundation model
+   - Configured as a restaurant reservation agent with customized instructions
+   - Enables user input and auto-preparation
+
+2. Knowledge Base
+   - Uses Amazon Bedrock Knowledge Base with S3 data source
+   - Configured with Titan Embed Text V2 (256 dimensions) for embeddings
+   - Uses OpenSearch Serverless for vector storage
+   - Implements chunking strategy with 500 token size and 20% overlap
+   - Custom instructions for restaurant menu queries
+
+3. Action Groups
+   Two action groups are implemented to handle restaurant-related operations:
+
+   a) Restaurant Finder Action Group
+      - Lambda Function: Python 3.13 runtime with AWS Lambda Powertools
+      - Uses SerpAPI to search for restaurants
+      - Endpoints:
+        * GET /get_restaurants
+          - Searches for restaurants by food type
+          - Returns restaurant name, address, and description
+
+   b) Restaurant Management Action Group
+      - Lambda Function: Python 3.13 runtime with AWS Lambda Powertools
+      - Manages restaurant bookings through a REST API
+      - Endpoints:
+        * POST /booking
+          - Creates new restaurant reservations
+          - Parameters: booking_date, booking_time, booking_name, num_guests
+        * GET /bookings
+          - Retrieves booking details by booking ID
+        * DELETE /bookings
+          - Cancels restaurant reservations by booking ID
+
+4. Infrastructure Features
+   - S3 bucket for access logs with enforced SSL and encryption
+   - OpenSearch Serverless vector collection with optional standby replicas
+   - Lambda functions configured with 2-minute timeout and debug logging
+   - AWS Lambda Powertools layer for enhanced logging and tracing
+   - CDK outputs for Bedrock Agent ID and Alias ID
+
+##### Amazon Lex bot Stack
+
+While both Amazon Lex and Bedrock FM are related to natural language processing, "Lex NLU" focuses primarily on understanding user intent through natural language processing, acting as the conversational interface, while "Bedrock LLM" refers to a broader platform offering access to various large language models (LLMs) from different providers, allowing us to generate more complex text responses within our application.
+
+The separation of concerns between Lex and Bedrock, allow us to use Lex for user interface and channels, such as integration with Amazon Connect for advanced chatbot capabilities and as the listener, and keeping Bedrock as the generative power.
 
 2. **LexBotConstruct** (`lib/constructs/lex-bot/lex-bot-construct.ts`)
    - A reusable construct for Amazon Lex bot configuration
