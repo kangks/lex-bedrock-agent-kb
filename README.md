@@ -13,19 +13,23 @@ This project implements a chatbot using Amazon Lex that leverages Amazon Bedrock
 
 ```
 .
-├── bin/                  # CDK app entry point
-├── lib/                  # CDK infrastructure code
-│   ├── constructs/      # CDK construct implementations
-│   │   ├── bedrock-agent-kb/    # Bedrock Knowledge Base construct
-│   │   │   ├── action-group.yaml # OpenAPI spec for Action Group API
-│   │   │   ├── bedrock-kb-construct.ts # Bedrock KB construct implementation
-│   │   │   └── lambda/          # Lambda functions for Bedrock KB
-│   │   └── lex-bot/            # Lex Bot construct
-│   │       ├── lex-bot-construct.ts # Lex Bot construct implementation
-│   │       └── lambda/          # Lambda functions for Lex Bot
-│   └── s3-datasource-stack.ts   # Main stack for S3 data source
-├── scripts/            # Utility scripts
-└── test/              # Test files
+├── bin/                                  # CDK app entry point
+├── lib/                                  # CDK infrastructure code
+│   ├── constructs/                       # CDK construct implementations
+│   │   ├── bedrock-agent-kb/             # Bedrock Knowledge Base construct
+│   │   │   └── bedrock-kb-construct.ts   # Bedrock KB construct implementation
+│   │   │   └── lambda/                   # Lambda functions for Bedrock KB
+│   │   └── lex-bot/                      # Lex Bot construct
+│   │       ├── lex-bot-construct.ts      # Lex Bot construct implementation
+│   │       └── lambda/                   # Lambda functions for Lex Bot
+│   └── s3-datasource-stack.ts            # Main stack for S3 data source
+├── restaurant_planner/                   # Bedrock agent action groups
+│   ├── restaurant-finder-openapi/        # OpenAPI spec and Lambda function for Google search
+│   │   └── restaurant-finder.json        # OpenAPI spec for Google search
+│   └── restaurant-management-openapi/    # OpenAPI and Lambda function for Restaurant booking management
+│       └── restaurant-booking.json       # OpenAPI spec for Restaurant booking management
+├── scripts/                              # Utility scripts
+└── test/                                 # Test files
 ```
 
 ## Components
@@ -74,7 +78,15 @@ The constructs are designed to be modular and reusable, allowing for flexible de
    - Handles top books retrieval functionality
 
 ### Action Groups
-Defined in `action-group.yaml`, this OpenAPI specification describes the available external API endpoints that Bedrock Agent can invoke, including:
+The restaurant planner functionality is implemented through two OpenAPI specifications that define the available external API endpoints that Bedrock Agent can invoke:
+
+1. **Restaurant Finder API** (`restaurant_planner/restaurant-finder-openapi/restaurant-finder.json`):
+   - Provides endpoints for searching and discovering restaurants
+   - Allows querying restaurant information and availability
+
+2. **Restaurant Booking API** (`restaurant_planner/restaurant-management-openapi/restaurant-booking.json`):
+   - Handles restaurant reservation operations
+   - Manages booking confirmations and modifications
 - GET /top_books: Retrieves metadata about the most popular books
 
 ## Getting Started
