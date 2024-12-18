@@ -59,10 +59,17 @@ def get_restaurants(
                 }
             else:
                 response = {
-                    "restaurant_name": f"{local_results[0]['title']}",
-                    "restaurant_address": f"{local_results[0]['address']}",
-                    "restaurant_description": f"{local_results[0]['description']}",
+                    "restaurants": []
                 }
+
+                response.restaurants = [
+                    {
+                        "restaurant_name": f"{restaurant['title']}",
+                        "restaurant_address": f"{restaurant['address']}",
+                        "restaurant_description": f"{restaurant['description']}",
+                    } for restaurant in local_results[:3]
+                ]
+
         else:
             response = {
                 "error": results + "Unknown Error."

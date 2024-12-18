@@ -170,23 +170,33 @@ bedrockStack.BedrockKbbedrockAgentAliasId2A0E19AF = 8LVWXKS1EO
 bedrockStack.BedrockKbbedrockAgentId55BCE64E = TVWOE360IC
 ```
 
-### Test the agent from Bedrock AWS conole
+### Test the agent from Bedrock AWS console
 
 1. Goto [Amazon Bedrock AWS console](https:/console.aws.amazon.com/bedrock/home)
 2. Select Agents, select the agent created
 3. Select Test
-4. Enter prompt such as `make a reservation for Richard on 23 December 2024 at 8pm for 2 people`
-5. If the Agent works correctly, the agent should response with successful message, such as
+4. Let's find a restaurant 
+   ```
+   Find me an italian restaurant
+   ```
+4. If the `find_restaurant` action group works properly, the agent should come back with top 3 recommendations, such as
+   ```
+   I found these Italian restaurants for you: <REDACTED>. Osteria Mozza <REDACTED>. Baci Baci Ristorante Italiano <REDACTED>. Trattoria da Mimmo Restaurant and Pizzeria Would you like to make a reservation at any of these restaurants?
+   ```
+5. Make a reservation 
+   ```
+   Make a reservation to Osteria Mozza, for 2 people on 25 December 2024 at 8pm, under the name of Richard
+   ```
+5. If the `restaurant_booking_management` agent works correctly, the agent should response with successful message, such as
 
 ```
-Your reservation has been confirmed! Here are the details: - Date: December 23, 2024 - Time: 8:00 PM - Number of guests: 2 - Booking name: Richard - Booking ID: 5ac6a053 Please keep your booking ID for future reference.
+Your reservation has been confirmed at Osteria Mozza: - Date: December <REDACTED>5, <REDACTED>0<REDACTED>4 - Time: 8:00 PM - Number of guests: <REDACTED> - Name: Richard - Booking ID: d0<REDACTED>c8<REDACTED>9e Please keep your booking ID for future reference.
 ```
-![image](assets/Bedrock_agent_test.png)
+![image](assets/Bedrock_agent_test-find_restaurant_make_booking.png)
 
 6. Try to get the reservation using the booking number, such as `retrieve my reservation using my Booking ID which is 371ca280`
 
 ![image](assets/Bedrock_agent_test-get_bookings.png)
-
 
 ## Security
 
