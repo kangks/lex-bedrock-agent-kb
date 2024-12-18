@@ -206,3 +206,7 @@ The infrastructure includes security best practices such as:
 - Public access blocking
 - Version control for audit trails
 
+## References
+
+* [Lambda Powertools for Bedrock Agent Resolver](https://docs.powertools.aws.dev/lambda/python/2.27.1/api/event_handler/#aws_lambda_powertools.event_handler.BedrockAgentResolver)
+* [Anthropic documentation for tool use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use#example-api-response-with-a-tool-use-content-block)
