@@ -2,6 +2,39 @@
 
 This repository demonstrates the integration of Amazon Lex with Amazon Bedrock Agent, showcasing how to handle both external API calls and Bedrock Knowledge Base queries through a fallback intent handler.
 
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [Lex Bedrock Agent Integration Demo](#lex-bedrock-agent-integration-demo)
+  - [Overview](#overview)
+  - [Repository Structure](#repository-structure)
+  - [Components](#components)
+    - [CDK Infrastructure](#cdk-infrastructure)
+      - [CDK Constructs](#cdk-constructs)
+        - [Bedrock Agent Stack](#bedrock-agent-stack)
+        - [Amazon Lex bot Stack](#amazon-lex-bot-stack)
+      - [Main Stack](#main-stack)
+    - [Lambda Functions](#lambda-functions)
+    - [Action Groups](#action-groups)
+  - [Getting Started](#getting-started)
+    - [Step 1: Create app-config.json](#step-1-create-app-configjson)
+    - [Step 1: Upload the document data](#step-1-upload-the-document-data)
+    - [Step 2: Creates the Hotel booking API](#step-2-creates-the-hotel-booking-api)
+      - [AWS CLI](#aws-cli)
+    - [Step 3: Creates the Bedrock Agent and knowledge base](#step-3-creates-the-bedrock-agent-and-knowledge-base)
+      - [Generate OpenAPI Spec](#generate-openapi-spec)
+      - [Update stack config and create the CDK stack](#update-stack-config-and-create-the-cdk-stack)
+      - [Test the agent from Bedrock AWS console](#test-the-agent-from-bedrock-aws-console)
+    - [Step 4: Creates the Lex bot](#step-4-creates-the-lex-bot)
+      - [Test the Lex bot](#test-the-lex-bot)
+  - [Security](#security)
+  - [References](#references)
+
+<!-- /code_chunk_output -->
+
+
 ## Overview
 
 This project implements a chatbot using Amazon Lex that leverages Amazon Bedrock Agent to handle queries. When Lex cannot handle a user query directly, it falls back to a Bedrock Agent that can:
@@ -224,7 +257,7 @@ bedrockStack.BedrockKbbedrockAgentAliasId2A0E19AF = 8LVWXKS1EO
 bedrockStack.BedrockKbbedrockAgentId55BCE64E = TVWOE360IC
 ```
 
-### Test the agent from Bedrock AWS console
+#### Test the agent from Bedrock AWS console
 
 1. Goto [Amazon Bedrock AWS console](https:/console.aws.amazon.com/bedrock/home)
 2. Select Agents, select the agent created
@@ -251,6 +284,18 @@ Your reservation has been confirmed at Osteria Mozza: - Date: December <REDACTED
 6. Try to get the reservation using the booking number, such as `retrieve my reservation using my Booking ID which is 371ca280`
 
 ![image](assets/Bedrock_agent_test-get_bookings.png)
+
+### Step 4: Creates the Lex bot
+
+1. Deploy the Lex stack using command `cdk deploy LexBotStack`
+
+#### Test the Lex bot
+1. Goto Amazon Lex dashboard https://console.aws.amazon.com/lexv2/home
+2. Test the bot with both welcome intent and fallback intent
+
+![image](assets/lex-test.png)
+1. WelcomeIntent
+2. FallbackIntent
 
 ## Security
 
