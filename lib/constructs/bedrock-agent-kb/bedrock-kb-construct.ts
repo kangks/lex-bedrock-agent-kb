@@ -9,11 +9,11 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambda_python from '@aws-cdk/aws-lambda-python-alpha';
 import * as opensearchserverless from '@cdklabs/generative-ai-cdk-constructs/lib/cdk-lib/opensearchserverless';
 
-export interface ActionGroupConfig{
+export interface ActionGroupConfig {
   lambdaFunctionName: string,
   lambdaFunctionRelativeToConstructPath: string,
   openapiSpecRelativeToConstructPath: string,
-  functionEnvironments?: {[key: string]: any}
+  functionEnvironments?: { [key: string]: any }
 }
 
 export interface BedrockKbProps {
@@ -34,8 +34,8 @@ export class BedrockKbConstruct extends Construct {
       model: bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_3_5_SONNET_V2_0,
     });
 
-    this.bedrockAgent = new bedrock.Agent(this, 
-      `${cdk.Stack.of(this).stackName}-agent`, 
+    this.bedrockAgent = new bedrock.Agent(this,
+      `${cdk.Stack.of(this).stackName}-agent`,
       {
         name: `${cdk.Stack.of(this).stackName}-agent`,
         foundationModel: inferenceProfile,
@@ -46,7 +46,7 @@ export class BedrockKbConstruct extends Construct {
     );
 
     const kb = this.addS3KnowledgeBase(
-      props.knowledgebaseDataSourceName, 
+      props.knowledgebaseDataSourceName,
       props.bedrockKnowledgeS3Bucket
     );
     this.bedrockAgent.addKnowledgeBase(kb);
@@ -54,16 +54,18 @@ export class BedrockKbConstruct extends Construct {
 
     this.agentAlias = this.bedrockAgent.addAlias({
       aliasName: 'agent01',
-      description:'alias for bedrock agent'
+      description: 'alias for bedrock agent'
     });
 
     new cdk.CfnOutput(this, 'bedrockAgentId', {
       exportName: `${cdk.Stack.of(this).stackName}-bedrockAgentId`,
-      value: this.bedrockAgent.agentId});
+      value: this.bedrockAgent.agentId
+    });
 
     new cdk.CfnOutput(this, 'bedrockAgentAliasId', {
       exportName: `${cdk.Stack.of(this).stackName}-bedrockAgentAliasId`,
-      value: this.agentAlias.aliasId ?? ""});
+      value: this.agentAlias.aliasId ?? ""
+    });
 
 
     NagSuppressions.addResourceSuppressionsByPath(
@@ -80,7 +82,7 @@ export class BedrockKbConstruct extends Construct {
         },
       ],
       true,
-    );        
+    );
     NagSuppressions.addResourceSuppressionsByPath(
       cdk.Stack.of(this),
       `/${cdk.Stack.of(this)}/BedrockKb/bedrockStack-agent/Role/DefaultPolicy/Resource`,
@@ -90,7 +92,7 @@ export class BedrockKbConstruct extends Construct {
           reason: 'foundation-model role uses a wildcard and managed by CDK.',
         },
       ],
-    );            
+    );
     NagSuppressions.addResourceSuppressionsByPath(
       cdk.Stack.of(this),
       `/${cdk.Stack.of(this)}/OpenSearchIndexCRProvider/CustomResourcesFunction/Resource`,
@@ -104,7 +106,7 @@ export class BedrockKbConstruct extends Construct {
     );
   }
 
-  public addS3KnowledgeBase(knowledgeBaseName: string, bedrockKnowledgeS3Bucket: string ):bedrock.KnowledgeBase{
+  public addS3KnowledgeBase(knowledgeBaseName: string, bedrockKnowledgeS3Bucket: string): bedrock.KnowledgeBase {
     // Create access logs bucket
     const accesslogBucket = new s3.Bucket(this, `${cdk.Stack.of(this).stackName}-${knowledgeBaseName}-accesslog`, {
       enforceSSL: true,
@@ -116,7 +118,7 @@ export class BedrockKbConstruct extends Construct {
       autoDeleteObjects: true,
     });
     NagSuppressions.addResourceSuppressions(accesslogBucket, [
-      {id: 'AwsSolutions-S1', reason: 'There is no need to enable access logging for the AccessLogs bucket.'},
+      { id: 'AwsSolutions-S1', reason: 'There is no need to enable access logging for the AccessLogs bucket.' },
     ]);
 
     // Create vector store
@@ -130,10 +132,10 @@ export class BedrockKbConstruct extends Construct {
             ? opensearchserverless.VectorCollectionStandbyReplicas.ENABLED
             : opensearchserverless.VectorCollectionStandbyReplicas.DISABLED,
       }
-    );    
+    );
 
     const kb = new bedrock.KnowledgeBase(
-      this, 
+      this,
       `${cdk.Stack.of(this).stackName}-knowledgebase`,
       {
         embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V2_256,
@@ -143,8 +145,8 @@ export class BedrockKbConstruct extends Construct {
       }
     );
 
-    const s3DataSource = new bedrock.S3DataSource(this, 
-      `${cdk.Stack.of(this).stackName}-datasource`, 
+    const s3DataSource = new bedrock.S3DataSource(this,
+      `${cdk.Stack.of(this).stackName}-datasource`,
       {
         bucket: cdk.aws_s3.Bucket.fromBucketName(this, `${cdk.Stack.of(this).stackName}-s3bucket`, bedrockKnowledgeS3Bucket),
         knowledgeBase: kb,
@@ -154,7 +156,7 @@ export class BedrockKbConstruct extends Construct {
           overlapPercentage: 20,
         }),
       }
-    );    
+    );
 
     NagSuppressions.addResourceSuppressions(
       vectorStore,
@@ -165,24 +167,24 @@ export class BedrockKbConstruct extends Construct {
         }
       ],
       true,
-    );  
-        
+    );
+
     return kb;
 
   }
 
-  public addActionGroups(actionGroupsParam: ActionGroupConfig[]){
+  public addActionGroups(actionGroupsParam: ActionGroupConfig[]) {
 
-    const actionGroups:AgentActionGroup[] = []
+    const actionGroups: AgentActionGroup[] = []
 
     actionGroupsParam.forEach((actionGroupConfig: ActionGroupConfig) => {
-      let lambdaFunction = new lambda_python.PythonFunction(this, 
-        `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}`, 
+      let lambdaFunction = new lambda_python.PythonFunction(this,
+        `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}`,
         {
           functionName: actionGroupConfig.lambdaFunctionName,
           runtime: lambda.Runtime.PYTHON_3_13,
           entry: path.join(__dirname, actionGroupConfig.lambdaFunctionRelativeToConstructPath),
-          layers: [lambda.LayerVersion.fromLayerVersionArn(this, `${actionGroupConfig.lambdaFunctionName}-PowerToolsLayer`, 
+          layers: [lambda.LayerVersion.fromLayerVersionArn(this, `${actionGroupConfig.lambdaFunctionName}-PowerToolsLayer`,
             `arn:aws:lambda:${cdk.Stack.of(this).region}:017000801446:layer:AWSLambdaPowertoolsPythonV3-python313-x86_64:4`)],
           timeout: cdk.Duration.minutes(2),
           environment: {
@@ -191,15 +193,15 @@ export class BedrockKbConstruct extends Construct {
         }
       );
 
-      if(actionGroupConfig.functionEnvironments){
-        for (let key in actionGroupConfig.functionEnvironments){
+      if (actionGroupConfig.functionEnvironments) {
+        for (let key in actionGroupConfig.functionEnvironments) {
           lambdaFunction.addEnvironment(
             key, actionGroupConfig.functionEnvironments[key]
           )
-        }        
+        }
       };
 
-      let agentActionGroup = new AgentActionGroup(this, 
+      let agentActionGroup = new AgentActionGroup(this,
         `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}-action-group`,
         {
           actionGroupName: `${cdk.Stack.of(this).stackName}-${actionGroupConfig.lambdaFunctionName}-action-group`,
@@ -208,7 +210,7 @@ export class BedrockKbConstruct extends Construct {
           },
           actionGroupState: "ENABLED",
           apiSchema: bedrock.ApiSchema.fromAsset(path.join(__dirname, actionGroupConfig.openapiSpecRelativeToConstructPath)),
-          skipResourceInUseCheckOnDelete: true 
+          skipResourceInUseCheckOnDelete: true
         }
       );
 
@@ -225,8 +227,21 @@ export class BedrockKbConstruct extends Construct {
           }
         ],
         true,
-      );            
+      );
     });
     this.bedrockAgent.addActionGroups(actionGroups);
   }
+
+  // public addBedrockGuardrail(bedrockAgent: bedrock.Agent) {
+  //   bedrockAgent.addGuardrail(
+  //     new bedrock.Guardrail(this, `${cdk.Stack.of(this).stackName}-guardrail`, {
+  //       name: `${cdk.Stack.of(this).stackName}-guardrail`,
+  //       blockList: [
+  //         'Do not mention the name of the restaurant or the menu.',
+  //         'Do not mention the name of the restaurant or the menu.',
+  //         'Do not mention the name of the restaurant or the menu.',
+  //       ]
+  //     }
+  //     ))
+  // }
 }
