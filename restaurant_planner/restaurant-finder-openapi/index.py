@@ -40,12 +40,12 @@ def get_restaurants(
         'num': "1"
     }    
 
-    search = GoogleSearch(params)
-    results = search.get_dict()
-
-    logger.debug(f"results: {results}")
-
     try:
+        search = GoogleSearch(params)
+        results = search.get_dict()
+
+        logger.debug(f"results: {results}")
+
         response={}
         if results.get('error'):
             response = {
@@ -59,16 +59,14 @@ def get_restaurants(
                 }
             else:
                 response = {
-                    "restaurants": []
+                    "restaurants": [
+                        {
+                            "restaurant_name": f"{restaurant.get('title',"")}",
+                            "restaurant_address": f"{restaurant.get('address',"")}",
+                            "restaurant_description": f"{restaurant.get('description',"")}",
+                        } for restaurant in local_results[:3]
+                    ]
                 }
-
-                response.restaurants = [
-                    {
-                        "restaurant_name": f"{restaurant['title']}",
-                        "restaurant_address": f"{restaurant['address']}",
-                        "restaurant_description": f"{restaurant['description']}",
-                    } for restaurant in local_results[:3]
-                ]
 
         else:
             response = {
@@ -79,7 +77,7 @@ def get_restaurants(
         return response
     
     except Exception as e:
-        logger.error(f"Error processing request: {str(e)}")
+        logger.exception(f"Error processing request: {str(e)}")
         return {
             "messageVersion": "1.0",
             "error": {
