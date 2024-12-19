@@ -138,7 +138,7 @@ export class BedrockKbConstruct extends Construct {
       {
         embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V2_256,
         instruction: 'Use this knowledge base to answer questions about restaurant menu. ' +
-          'It contains the full menu. Please quote the menu to explain your answers.',
+          'It contains the full menu. Please quote the books to explain your answers.',
         vectorStore: vectorStore
       }
     );
