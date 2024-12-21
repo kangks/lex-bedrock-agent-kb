@@ -1,0 +1,61 @@
+{
+    "description": "Bedrock Guardrail created with AWS, https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-bedrock-guardrail.html#aws-resource-bedrock-guardrail-syntax",
+    "name": "lex-bedrock-agent-guardrail",
+    "blockedInputMessaging": "Guardrail applied based on the input.",
+    "blockedOutputsMessaging": "Guardrail applied based on output.",
+    "contentPolicyConfig": {
+        "filtersConfig": [
+            {
+                "inputStrength": "HIGH",
+                "outputStrength": "HIGH",
+                "type": "SEXUAL"
+            },
+            {
+                "inputStrength": "HIGH",
+                "outputStrength": "HIGH",
+                "type": "VIOLENCE"
+            },
+            {
+                "inputStrength": "HIGH",
+                "outputStrength": "HIGH",
+                "type": "HATE"
+            },
+            {
+                "inputStrength": "HIGH",
+                "outputStrength": "HIGH",
+                "type": "INSULTS"
+            },
+            {
+                "inputStrength": "HIGH",
+                "outputStrength": "HIGH",
+                "type": "MISCONDUCT"
+            },
+            {
+                "inputStrength": "NONE",
+                "outputStrength": "NONE",
+                "type": "PROMPT_ATTACK"
+            }
+        ]
+    },
+    "failureRecommendations": {},
+    "topicPolicyConfig": {
+        "topicsConfig": [
+            {
+                "name": "avoid health advise",
+                "definition": "Providing personalized advice or recommendations on personal health",
+                "examples": [
+                    "What food should I eat to treat my sickness?",
+                    "Is it a good idea to eat apple when I am having a flu?",
+                    "How should I cure my dizziness?",
+                    "What type of food should I get for my children?"
+                ]
+            }            
+        ]
+    },
+    "wordPolicy": {
+        "words": [
+            "silly"
+        ],
+        "managedWordLists": []
+    }
+}

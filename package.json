@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@aws-cdk/aws-lambda-python-alpha": "^2.171.1-alpha.0",
+    "@aws/agents-for-amazon-bedrock-blueprints": "^1.0.0",
     "@cdklabs/generative-ai-cdk-constructs": "^0.1.286",
     "aws-cdk-lib": "^2.171.1",
     "cdk-nag": "^2.34.15",

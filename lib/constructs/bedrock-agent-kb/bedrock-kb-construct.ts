@@ -1,10 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
+// import { aws_bedrock as bedrock } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { bedrock } from '@cdklabs/generative-ai-cdk-constructs';
 import { NagSuppressions } from "cdk-nag";
 import * as path from "path";
-import { AgentActionGroup } from '@cdklabs/generative-ai-cdk-constructs/lib/cdk-lib/bedrock';
+import { AgentActionGroup, ContentFilter, Topic } from '@cdklabs/generative-ai-cdk-constructs/lib/cdk-lib/bedrock';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambda_python from '@aws-cdk/aws-lambda-python-alpha';
 import * as opensearchserverless from '@cdklabs/generative-ai-cdk-constructs/lib/cdk-lib/opensearchserverless';
@@ -51,6 +52,20 @@ export class BedrockKbConstruct extends Construct {
     );
     this.bedrockAgent.addKnowledgeBase(kb);
     this.addActionGroups(props.actionGroups);
+
+    const bedrockGuardrailConfig = require('./bedrock-guardrail.json');
+
+    const guardrail = new bedrock.Guardrail(this, 'guardrail', {
+      name: bedrockGuardrailConfig.name,
+      description: bedrockGuardrailConfig.description,
+      blockedInputMessaging: bedrockGuardrailConfig.blockedInputMessaging,
+      blockedOutputsMessaging: bedrockGuardrailConfig.blockedOutputsMessaging,
+      contentFilters: bedrockGuardrailConfig.contentPolicyConfig.filtersConfig as ContentFilter[],
+      deniedTopics: bedrockGuardrailConfig.topicPolicyConfig.topicsConfig as Topic[],
+      wordFilters: bedrockGuardrailConfig.wordPolicy.words
+    });
+    // guardrail.addWordFilterFromFile(path.join(__dirname, 'word-filter.txt')
+    this.bedrockAgent.addGuardrail(guardrail);
 
     this.agentAlias = this.bedrockAgent.addAlias({
       aliasName: 'agent01',
@@ -213,8 +228,6 @@ export class BedrockKbConstruct extends Construct {
           skipResourceInUseCheckOnDelete: true
         }
       );
-
-      console.log(">>agentActionGroup", agentActionGroup);
 
       actionGroups.push(agentActionGroup);
 
