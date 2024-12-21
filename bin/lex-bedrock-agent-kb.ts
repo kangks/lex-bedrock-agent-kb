@@ -15,7 +15,7 @@ const env = {
 
 const app = new cdk.App();
 
-Apply CDK nag checks
+// Apply CDK nag checks
 cdk.Aspects.of(app).add(new AwsSolutionsChecks({verbose: true}));
 
 const s3DataSourceStack = new S3DataSourceStack(app, 's3DataSourceStack', {
