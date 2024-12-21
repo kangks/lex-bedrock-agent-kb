@@ -6,6 +6,7 @@ import { S3DataSourceStack } from '../lib/s3-datasource-stack';
 import { BedrockKbConstruct } from '../lib/constructs/bedrock-agent-kb/bedrock-kb-construct';
 import { LexBotConstruct } from '../lib/constructs/lex-bot/lex-bot-construct';
 import appConfig from '../app-config.json';
+import { BedrockAgentConstruct } from '../lib/constructs/bedrock-agent-kb/bedrock-agent-construct';
 // import { BedrockKbAgentStack } from '../lib/constructs/bedrock-agent-kb/bedrock-kb-agent-stack';
 
 const env = {
@@ -25,16 +26,21 @@ const s3DataSourceStack = new S3DataSourceStack(app, 's3DataSourceStack', {
 });
 
 // Create the Bedrock KB construct
-const bedrockKb = new BedrockKbConstruct(new cdk.Stack(app, 'bedrockStack'), 'BedrockKb', {
+const bedrockKb = new BedrockKbConstruct(new cdk.Stack(app, 'bedrockKbStack', {env}), 'BedrockKb', {
   knowledgebaseDataSourceName: appConfig.knowledgebase.knowledgebaseDataSourceName,
-  bedrockKnowledgeS3Bucket: appConfig.s3DataSource.s3bucketName,
+  bedrockKnowledgeS3Bucket: appConfig.s3DataSource.s3bucketName
+});
+
+// Create the Bedrock Agent construct
+const bedrockAgent = new BedrockAgentConstruct(new cdk.Stack(app, 'bedrockAgentStack', {env}), 'BedrockKb', {
+  bedrockKnowledgeId: bedrockKb.kb,
   actionGroups: appConfig.actionGroups
 });
 
 // Create the Lex Bot construct
 const lexBot = new LexBotConstruct(new cdk.Stack(app, 'LexBotStack'), 'LexBot', {
-  bedrockAgentId: bedrockKb.bedrockAgent.agentId,
-  bedrockAgentAliasId: bedrockKb.agentAlias.aliasId,
+  bedrockAgentId: bedrockAgent.bedrockAgent.agentId,
+  bedrockAgentAliasId: bedrockAgent.agentAlias.aliasId,
 });
 
 // Bedrock Agent Blueprint does not support Titan Embedding v2 yet

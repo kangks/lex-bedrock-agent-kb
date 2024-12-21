@@ -28,7 +28,7 @@ export interface BedrockKbProps extends cdk.StackProps {
     readonly actionGroups: ActionGroupConfigParam[]
 }
 
-export class BedrockKbAgentStack extends cdk.Stack {
+export class BedrockAgentStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: BedrockKbProps) {
         super(scope, id, props);
 
