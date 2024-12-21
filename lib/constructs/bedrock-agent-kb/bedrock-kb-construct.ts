@@ -46,7 +46,7 @@ export class BedrockKbConstruct extends Construct {
       }
     );
 
-    const kb = this.addS3KnowledgeBase(
+    const kb = BedrockKbConstruct.addS3KnowledgeBase(cdk.Stack.of(this),
       props.knowledgebaseDataSourceName,
       props.bedrockKnowledgeS3Bucket
     );
@@ -121,9 +121,9 @@ export class BedrockKbConstruct extends Construct {
     );
   }
 
-  public addS3KnowledgeBase(knowledgeBaseName: string, bedrockKnowledgeS3Bucket: string): bedrock.KnowledgeBase {
+  public static addS3KnowledgeBase(stack: cdk.Stack, knowledgeBaseName: string, bedrockKnowledgeS3Bucket: string): bedrock.KnowledgeBase {
     // Create access logs bucket
-    const accesslogBucket = new s3.Bucket(this, `${cdk.Stack.of(this).stackName}-${knowledgeBaseName}-accesslog`, {
+    const accesslogBucket = new s3.Bucket(stack, `${stack.stackName}-${knowledgeBaseName}-accesslog`, {
       enforceSSL: true,
       versioned: true,
       publicReadAccess: false,
@@ -138,8 +138,8 @@ export class BedrockKbConstruct extends Construct {
 
     // Create vector store
     const vectorStore = new opensearchserverless.VectorCollection(
-      this,
-      `${cdk.Stack.of(this).stackName}-${knowledgeBaseName}-vectorstore`,
+      stack,
+      `${stack.stackName}-${knowledgeBaseName}-vectorstore`,
       {
         collectionName: knowledgeBaseName,
         standbyReplicas:
@@ -150,8 +150,8 @@ export class BedrockKbConstruct extends Construct {
     );
 
     const kb = new bedrock.KnowledgeBase(
-      this,
-      `${cdk.Stack.of(this).stackName}-knowledgebase`,
+      stack,
+      `${stack.stackName}-knowledgebase`,
       {
         embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V2_256,
         instruction: 'Use this knowledge base to answer questions about restaurant menu. ' +
@@ -160,12 +160,12 @@ export class BedrockKbConstruct extends Construct {
       }
     );
 
-    const s3DataSource = new bedrock.S3DataSource(this,
-      `${cdk.Stack.of(this).stackName}-datasource`,
+    const s3DataSource = new bedrock.S3DataSource(stack,
+      `${stack.stackName}-datasource`,
       {
-        bucket: cdk.aws_s3.Bucket.fromBucketName(this, `${cdk.Stack.of(this).stackName}-s3bucket`, bedrockKnowledgeS3Bucket),
+        bucket: cdk.aws_s3.Bucket.fromBucketName(stack, `${stack.stackName}-s3bucket`, bedrockKnowledgeS3Bucket),
         knowledgeBase: kb,
-        dataSourceName: `${cdk.Stack.of(this).stackName}-knowledgebase-s3datasource`,
+        dataSourceName: `${stack.stackName}-knowledgebase-s3datasource`,
         chunkingStrategy: bedrock.ChunkingStrategy.fixedSize({
           maxTokens: 500,
           overlapPercentage: 20,
