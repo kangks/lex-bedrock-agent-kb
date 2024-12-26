@@ -12,7 +12,12 @@ podman run -it --rm -v ${PWD}/logs:/home/computeruse/app/logs \
 -p 5900:5900 computer_use \
 'Retrieve the latest Singapore COE bidding price and estimate the next bidding for Category A'
 ```
-3. You can connect to the view only VNC via port 5900 [Computer use screen recording](assets/computer_use.mp4)
+3. You can connect to the view only VNC via port 5900 
+
+    <video controls="" width="800" height="500" muted="" loop="" autoplay="">
+    <source src="https://github.com/kangks/lex-bedrock-agent-kb/raw/refs/heads/main/computer_use/assets/computer_use.mp4" type="video/mp4">
+    </video>
+
 4. If the execution is successful, the output should be something as below:
 ```
 Bedrock: [{'text': 'Based on the latest COE bidding results for December 2024 2nd Open Bidding Exercise that ended on 18/12/2024, here are the details for Category A:\n\nCurrent Category A (Cars up to 1600cc & 130bhp):\n- Quota: 1,035\n- Quota Premium (QP): $96,000\n- Prevailing Quota Premium (PQP): $97,747\n\nFor projecting the next bidding, we need to consider several factors:\n\n1. Recent trend: The Category A COE price has shown some stability around the $95,000-$100,000 range\n\n2. Key factors that might influence the next bidding:\n- Quota for the next bidding exercise (if announced)\n- Seasonal demand (typically higher during the start of the year)\n- Recent policy changes or announcements\n- Economic conditions\n\nBased on these factors, we can project that the next Category A COE bidding price is likely to:\n- Remain relatively stable with a possible slight increase due to typical higher demand at the start of the year\n- Expected range: $96,000 - $98,000\n\nPlease note that this is a projection based on current available data and market conditions. Actual COE prices can be affected by various unforeseen factors and market dynamics.\n\nWould you like me to provide more specific analysis of any particular aspect of the COE bidding results or factors affecting the projection?'}]
