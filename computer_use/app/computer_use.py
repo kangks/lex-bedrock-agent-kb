@@ -182,11 +182,6 @@ class BedrockComputerInteraction:
                         ]
                     }
                 }                
-                # with Image.open(input_screenshot) as im:
-                #     display(im)
-                # pyautogui.click()
-                # sleep(0.25)
-                # screenshot = get_screenshot()
             case 'mouse_move':
                 coordinate = input_data['coordinate']
                 logger.info(f"coordinate: {coordinate}, input_data:{input_data}")
@@ -203,10 +198,6 @@ class BedrockComputerInteraction:
                         ]
                     }
                 }                
-                # if coordinate:
-                #     x, y = tuple(input_data['coordinate'])
-                #     click_on_screenshot(input_screenshot, x, y)
-                #     sleep(0.25)
             case _:
                 logger.exception("Unsupported action received")
         return response 
@@ -304,9 +295,9 @@ if __name__ == "__main__":
                 {
                     "type": "computer_20241022",
                     "name": "computer",
-                    "display_height_px": 1856,
-                    "display_width_px": 1332,
-                    "display_number": 0
+                    "display_height_px": int(os.environ.get("HEIGHT",768)),
+                    "display_width_px": int(os.environ.get("WIDTH",1024)),
+                    "display_number": int(os.environ.get("DISPLAY",':0')[1:])
                 }
             ],
             "anthropic_beta": ["computer-use-2024-10-22"]
