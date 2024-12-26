@@ -5,8 +5,10 @@ import platform
 from botocore.exceptions import ClientError
 from botocore.config import Config
 from time import sleep
+from datetime import datetime
 
 import sys
+import subprocess
 
 from pprint import pformat
 import Xlib.display
@@ -32,7 +34,7 @@ rootLogger.addHandler(consoleHandler)
 
 logger = logging.getLogger(__name__)
 
-THROTTLING_DELAY_SECONDS=30
+THROTTLING_DELAY_SECONDS=int(os.environ.get("THROTTLING_DELAY_SECONDS",10))
 
 class SaveScreenshot:
     def __init__(self):
@@ -102,6 +104,25 @@ class BedrockComputerInteraction:
                 logger.error(pformat(messages))
             logger.exception(f"Error communicating with Bedrock: {e}")
             return None
+        
+    def execute_tool_command(self, command, input_data, tool_use_id):
+        logger.info(f"Executing tool commnd: {command} for tool_use_id: {tool_use_id}")
+
+        logger.info(f"command:{command}, input_data:{input_data}")
+        result = subprocess.run(command, shell=True, stdout=subprocess.PIPE).stdout.decode('utf-8')
+        logger.info(f"result:{result}")
+        response={
+            'toolResult': {
+                'toolUseId': tool_use_id,
+                'content':[
+                    {
+                        'text': 'OK'
+                    }
+                ]
+            }
+        }                
+
+        return response 
 
     def execute_tool_action(self, action, input_data, tool_use_id):
         """Simulate executing a tool action from Bedrock."""
@@ -157,7 +178,13 @@ class BedrockComputerInteraction:
                 logger.info(f"key:{key}, input_data:{input_data}")
                 if key.lower() == 'return':
                     key = 'enter'
-                pyautogui.press(input_data.get('text'))
+                elif '+' in key:
+                    keys = key.split('+')
+                    logger.info(f"keys:{keys}, using pyautogui.hotkey()")
+                    pyautogui.hotkey(*keys)
+                else:
+                    pyautogui.press(input_data.get('text'))
+
                 response={
                     'toolResult': {
                         'toolUseId': tool_use_id,
@@ -242,14 +269,36 @@ class BedrockComputerInteraction:
                 for toolUse in self.get_tool_use(message_content):
                     # action = bedrock_response.get("action")
                     input_data = toolUse['input']
-                    action = input_data.get('action')
                     tool_use_id = toolUse['toolUseId']
-                    logger.info(f'action:{action}')
-                    if action:
-                        # Step 3: Execute tool action
+                    if(input_data.get('action')):
+                        action = input_data.get('action')
+                        logger.info(f'action:{action}')
                         tool_result = self.execute_tool_action(action, input_data, tool_use_id)
-
-                    tool_result_contents.append(tool_result)
+                        tool_result_contents.append(tool_result)
+                    elif(input_data.get('command')):
+                        command = input_data.get('command')
+                        logger.info(f'command:{command}')
+                        tool_result = self.execute_tool_command(command, input_data, tool_use_id)
+                        tool_result_contents.append(tool_result)
+                    elif(input_data.get('type')):
+                        input_data_type = input_data.get('type')
+                        if isinstance(input_data_type, dict):
+                            command = input_data_type.get('command')
+                        else:
+                            command = input_data_type
+                        logger.info(f'command:{command}')
+                        tool_result = self.execute_tool_command(command, input_data, tool_use_id)
+                        tool_result_contents.append(tool_result)
+                    else:
+                        # dummy response
+                        tool_result_contents.append({
+                            'toolResult': {
+                                'toolUseId': tool_use_id,
+                                'content':[{'text': 'OK'}
+                                ]
+                            }
+                        })
+                        
                 # Add assistant message and user tool result
                 self.add_message(role="assistant", content=message_content)
                 self.add_message(role="user", content=tool_result_contents)
@@ -270,11 +319,21 @@ class BedrockComputerInteraction:
 if __name__ == "__main__":
     REGION_NAME = "us-east-1"  # Replace with your region
     MODEL_ID = 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
-    SYSTEM = [{'text': f"""You are a helpful AI agent with access to computer control.
-                Always think step by step.
-                ENVIRONMENT:
-                1. {platform.system()}                 
-            """
+    SYSTEM = [{'text': f"""<SYSTEM_CAPABILITY>
+* You are utilising an Ubuntu virtual machine using {platform.machine()} architecture with internet access.
+* You can feel free to install Ubuntu applications with your bash tool. Use curl instead of wget.
+* To open firefox, please just click on the firefox icon.  Note, firefox-esr is what is installed on your system.
+* Using xterm to start GUI applications, but you need to set export DISPLAY={os.environ.get("DISPLAY",':0')} and use a subshell. For example "(DISPLAY={os.environ.get("DISPLAY",':0')} xterm &)". GUI apps run with bash tool will appear within your desktop environment, but they may take some time to appear. Take a screenshot to confirm it did.
+* When using your bash tool with commands that are expected to output very large quantities of text, redirect into a tmp file and use str_replace_editor or `grep -n -B <lines before> -A <lines after> <query> <filename>` to confirm output.
+* When viewing a page it can be helpful to zoom out so that you can see everything on the page. Either that, or make sure you scroll down to see everything before deciding something isn't available.
+* When using your computer function calls, they take a while to run and send back to you. Where possible/feasible, try to chain multiple of these calls all into one function calls request.
+* The current date is {datetime.today().strftime('%A, %B %-d, %Y')}.
+</SYSTEM_CAPABILITY>
+
+<IMPORTANT>
+* When using Firefox, if a startup wizard appears, IGNORE IT.  Do not even click "skip this step".  Instead, click on the address bar where it says "Search or enter address", and enter the appropriate search term or URL there.
+* If the item you are looking at is a pdf, if after taking a single screenshot of the pdf it seems that you want to read the entire document instead of trying to continue to read the pdf from your screenshots + navigation, determine the URL, use curl to download the pdf, install and use pdftotext to convert it to a text file, and then read that text file directly with your StrReplaceEditTool.
+</IMPORTANT>"""
     }]
     TOOL_CONFIG = {
         'tools': [

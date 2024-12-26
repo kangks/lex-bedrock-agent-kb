@@ -12,6 +12,7 @@ RUN apt-get update && \
     # UI Requirements
     xvfb \
     x11vnc \
+    curl \
     net-tools \
     software-properties-common
 
@@ -25,7 +26,15 @@ RUN apt-get install -y \
 RUN add-apt-repository ppa:mozillateam/ppa && \
     apt-get install -y --no-install-recommends \
     tint2 \
-    firefox-esr
+    firefox-esr \
+    libreoffice \
+    x11-apps \
+    gedit \
+    xpaint \
+    galculator \
+    unzip \
+    xpdf && \
+    apt-get clean
 
 FROM base
 
