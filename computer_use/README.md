@@ -14,7 +14,7 @@ podman run -it --rm -v ${PWD}/logs:/home/computeruse/app/logs \
 ```
 3. You can connect to the view only VNC via port 5900 
 
-![video](assets/video.svg)
+![video](assets/computer_use.gif)
 
 4. If the execution is successful, the output should be something as below:
 ```
