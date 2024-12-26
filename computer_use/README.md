@@ -14,9 +14,7 @@ podman run -it --rm -v ${PWD}/logs:/home/computeruse/app/logs \
 ```
 3. You can connect to the view only VNC via port 5900 
 
-    <video controls="" width="800" height="500" muted="" loop="" autoplay="">
-    <source src="https://github.com/kangks/lex-bedrock-agent-kb/raw/refs/heads/main/computer_use/assets/computer_use.mp4" type="video/mp4">
-    </video>
+![](assets/video.svg)
 
 4. If the execution is successful, the output should be something as below:
 ```
