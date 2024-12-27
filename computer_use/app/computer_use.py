@@ -55,7 +55,6 @@ class SaveScreenshot:
     
 class BedrockComputerInteraction:
     def __init__(self, region_name, model_id, system, tool_config, additional_request_fields):
-
         boto3_config = Config(
             region_name = 'us-east-1',
             signature_version = 'v4',
@@ -79,9 +78,9 @@ class BedrockComputerInteraction:
         self.screenshot = SaveScreenshot()
 
     def send_to_bedrock(self):
-        sleep(THROTTLING_DELAY_SECONDS)
         """Send messages to Bedrock and get the response using boto3."""
         try:            
+            sleep(THROTTLING_DELAY_SECONDS)
             response = self.client.converse(
                 modelId=self.model_id,
                 messages=self.messages,
@@ -116,7 +115,7 @@ class BedrockComputerInteraction:
                 'toolUseId': tool_use_id,
                 'content':[
                     {
-                        'text': 'OK'
+                        'text': {result}
                     }
                 ]
             }
@@ -178,6 +177,10 @@ class BedrockComputerInteraction:
                 logger.info(f"key:{key}, input_data:{input_data}")
                 if key.lower() == 'return':
                     key = 'enter'
+                    pyautogui.press(key)
+                elif '_' in key: # for example page_down
+                    key = key.replace("_","").lower()
+                    pyautogui.press(key)
                 elif '+' in key:
                     keys = key.split('+')
                     logger.info(f"keys:{keys}, using pyautogui.hotkey()")
@@ -310,7 +313,10 @@ class BedrockComputerInteraction:
                 if user_input.lower() == "exit":
                     print("Ending the interaction. Goodbye!")
                     break
-                self.add_message(role="user", content=[{"text": user_input}])
+                elif user_input:
+                    self.add_message(role="user", content=[{"text": user_input}])
+                else:
+                    break
             else:
                 # Handle other stop reasons if necessary
                 logger.exception(f"Unexpected stop reason: {stop_reason}")
@@ -321,18 +327,18 @@ if __name__ == "__main__":
     MODEL_ID = 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
     SYSTEM = [{'text': f"""<SYSTEM_CAPABILITY>
 * You are utilising an Ubuntu virtual machine using {platform.machine()} architecture with internet access.
-* You can feel free to install Ubuntu applications with your bash tool. Use curl instead of wget.
-* To open firefox, please just click on the firefox icon.  Note, firefox-esr is what is installed on your system.
-* Using xterm to start GUI applications, but you need to set export DISPLAY={os.environ.get("DISPLAY",':0')} and use a subshell. For example "(DISPLAY={os.environ.get("DISPLAY",':0')} xterm &)". GUI apps run with bash tool will appear within your desktop environment, but they may take some time to appear. Take a screenshot to confirm it did.
-* When using your bash tool with commands that are expected to output very large quantities of text, redirect into a tmp file and use str_replace_editor or `grep -n -B <lines before> -A <lines after> <query> <filename>` to confirm output.
+* To open web browser, please just click on the firefox icon.  Note, firefox-esr is what is installed on your system.
 * When viewing a page it can be helpful to zoom out so that you can see everything on the page. Either that, or make sure you scroll down to see everything before deciding something isn't available.
-* When using your computer function calls, they take a while to run and send back to you. Where possible/feasible, try to chain multiple of these calls all into one function calls request.
+* Create new tab in the Firefox if you need to open more than 1 website to complete your task.
+* When browsing a web page, they take a while to run and send back to you. 
+* When entering address in browser address bar, chain the actions of select and focu the address bar, check that the cursor is positioned in the address bar and address bar is being selected, enter the URL, and press enter in the same action.
 * The current date is {datetime.today().strftime('%A, %B %-d, %Y')}.
 </SYSTEM_CAPABILITY>
 
 <IMPORTANT>
 * When using Firefox, if a startup wizard appears, IGNORE IT.  Do not even click "skip this step".  Instead, click on the address bar where it says "Search or enter address", and enter the appropriate search term or URL there.
-* If the item you are looking at is a pdf, if after taking a single screenshot of the pdf it seems that you want to read the entire document instead of trying to continue to read the pdf from your screenshots + navigation, determine the URL, use curl to download the pdf, install and use pdftotext to convert it to a text file, and then read that text file directly with your StrReplaceEditTool.
+* Always validate the position of mouse cursor especially when selecting browser address bar.
+* When viewing a page it can be helpful to zoom out so that you can see everything on the page. Either that, or make sure you scroll down to see everything before deciding something isn't available, using key pagedown.
 </IMPORTANT>"""
     }]
     TOOL_CONFIG = {
@@ -352,6 +358,7 @@ if __name__ == "__main__":
     ADDITIONAL_REQUEST_FIELDS = {
             "tools": [
                 {
+                    # https://docs.anthropic.com/en/docs/build-with-claude/computer-use#computer-tool
                     "type": "computer_20241022",
                     "name": "computer",
                     "display_height_px": int(os.environ.get("HEIGHT",768)),
@@ -361,6 +368,8 @@ if __name__ == "__main__":
             ],
             "anthropic_beta": ["computer-use-2024-10-22"]
         }
+    
+    logger.info(f"ADDITIONAL_REQUEST_FIELDS: {ADDITIONAL_REQUEST_FIELDS}")
 
     interaction = BedrockComputerInteraction(
         region_name=REGION_NAME,
