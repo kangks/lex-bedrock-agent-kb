@@ -283,16 +283,17 @@ class BedrockComputerInteraction:
                         logger.info(f'command:{command}')
                         tool_result = self.execute_tool_command(command, input_data, tool_use_id)
                         tool_result_contents.append(tool_result)
-                    elif(input_data.get('type')):
-                        input_data_type = input_data.get('type')
-                        if isinstance(input_data_type, dict):
-                            command = input_data_type.get('command')
-                        else:
-                            command = input_data_type
-                        logger.info(f'command:{command}')
-                        tool_result = self.execute_tool_command(command, input_data, tool_use_id)
-                        tool_result_contents.append(tool_result)
+                    # elif(input_data.get('type')):
+                    #     input_data_type = input_data.get('type')
+                    #     if isinstance(input_data_type, dict):
+                    #         command = input_data_type.get('command')
+                    #     else:
+                    #         command = input_data_type
+                    #     logger.info(f'command:{command}')
+                    #     tool_result = self.execute_tool_command(command, input_data, tool_use_id)
+                    #     tool_result_contents.append(tool_result)
                     else:
+                        logger.exception(f"Unknown input: {input_data}")
                         # dummy response
                         tool_result_contents.append({
                             'toolResult': {
@@ -328,10 +329,13 @@ if __name__ == "__main__":
     SYSTEM = [{'text': f"""<SYSTEM_CAPABILITY>
 * You are utilising an Ubuntu virtual machine using {platform.machine()} architecture with internet access.
 * To open web browser, please just click on the firefox icon.  Note, firefox-esr is what is installed on your system.
-* When viewing a page it can be helpful to zoom out so that you can see everything on the page. Either that, or make sure you scroll down to see everything before deciding something isn't available.
+* Python library pyautogui is used to control the mouse and keyboard.
+* When viewing a webpage it can be helpful to zoom out so that you can see everything on the page. Either that, or make sure you scroll down to see everything before deciding something isn't available.
 * Create new tab in the Firefox if you need to open more than 1 website to complete your task.
 * When browsing a web page, they take a while to run and send back to you. 
 * When entering address in browser address bar, chain the actions of select and focu the address bar, check that the cursor is positioned in the address bar and address bar is being selected, enter the URL, and press enter in the same action.
+* The system allowing you to navigate and interact with various open applications simultaneously using the appropriate keyboard shortcuts, enabling efficient multi-tasking.
+* Do take note of the correct applications that you are conducting the action on if you runs multiple windows and multiple applications at the same time.
 * The current date is {datetime.today().strftime('%A, %B %-d, %Y')}.
 </SYSTEM_CAPABILITY>
 
@@ -345,7 +349,8 @@ if __name__ == "__main__":
         'tools': [
             {
                 'toolSpec': {
-                    'name': 'computer_tool',
+                    'name': 'upload_to_s3',
+                    "description": "Upload document to AWS S3",
                     'inputSchema': {
                         'json': {
                             'type': 'object'
